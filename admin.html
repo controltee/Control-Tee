@@ -383,6 +383,7 @@
                 <button class="admin-tab active" onclick="switchTab('posters', this)">Posters</button>
                 <button class="admin-tab" onclick="switchTab('videos', this)">Videos</button>
                 <button class="admin-tab" onclick="switchTab('video-hero', this)">Hero Video</button>
+                <button class="admin-tab" onclick="switchTab('categories', this)">Categories</button>
                 <button class="admin-tab" onclick="switchTab('clients', this)">Clients</button>
                 <button class="admin-tab" onclick="switchTab('projects', this)">Projects</button>
             </div>
@@ -476,19 +477,43 @@
                 </div>
             </div>
 
+            <!-- ── CATEGORIES TAB ──────────────────────── -->
+            <div class="tab-panel" id="tab-categories">
+                <div class="admin-section-title">Edit Categories</div>
+                <div class="admin-section-desc">Customize the descriptive text that appears on each category's public page.</div>
+                
+                <div style="display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 600px; margin-bottom: 40px;">
+                    <select id="edit-category-select" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: var(--black); color: var(--white); width: 100%;" onchange="loadCategoryDetails()">
+                        <option value="">-- Select Category to Edit --</option>
+                        <!-- Populated via JS -->
+                    </select>
+                    
+                    <textarea id="edit-category-desc" placeholder="Category description..." style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%; min-height: 100px; resize: vertical;"></textarea>
+                    
+                    <button class="btn" onclick="saveCategory()" style="margin-top:0; width:max-content;">Update Category</button>
+                    <div class="status-msg" id="category-status"></div>
+                </div>
+            </div>
+
             <!-- ── CLIENTS TAB (CMS Blueprint) ─────────── -->
             <div class="tab-panel" id="tab-clients">
                 <div class="admin-section-title">Manage Clients</div>
-                <div class="admin-section-desc">Create top-level clients (e.g., Riara University) or nested subclients (e.g., RUSA, RUSO). Add descriptions and banners here.</div>
+                <div class="admin-section-desc">Create top-level clients (e.g., Global Brand) or nested subclients (e.g., Regional Branch). Add descriptions and banners here.</div>
                 
                 <div style="display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 600px; margin-bottom: 40px;">
-                    <input type="text" id="client-name" placeholder="Client Name (e.g., Riara University)" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%;">
+                    <input type="text" id="client-name" placeholder="Client Name (e.g., Main Corporate Client)" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%;">
                     <textarea id="client-desc" placeholder="Optional Description..." style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%; min-height: 80px; resize: vertical;"></textarea>
                     
                     <select id="client-parent" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: var(--black); color: var(--white); width: 100%;">
                         <option value="">-- Top Level Client (No Parent) --</option>
                         <!-- Populated via JS -->
                     </select>
+                    
+                    <div style="border: 1px dashed var(--border); padding: 20px; border-radius: 4px; background: rgba(255,255,255,0.02);">
+                        <label style="display:block; margin-bottom: 8px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; letter-spacing: 1px; text-transform: uppercase; font-size: 0.8rem;">Client Banner (Optional)</label>
+                        <div class="upload-hint" style="margin-bottom: 12px;">Recommended: 1920 × 1080 px (16:9) · Max 2MB</div>
+                        <input type="file" id="client-banner" accept="image/*" style="color:var(--white);">
+                    </div>
                     
                     <button class="btn" onclick="saveClient()" style="margin-top:0; width:max-content;">Save Client</button>
                     <div class="status-msg" id="client-status"></div>
@@ -519,7 +544,8 @@
                     </select>
                     
                     <div style="border: 1px dashed var(--border); padding: 20px; border-radius: 4px; background: rgba(255,255,255,0.02);">
-                        <label style="display:block; margin-bottom: 12px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; letter-spacing: 1px; text-transform: uppercase; font-size: 0.8rem;">Cover Media (Image or Video)</label>
+                        <label style="display:block; margin-bottom: 8px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; letter-spacing: 1px; text-transform: uppercase; font-size: 0.8rem;">Cover Media (Image or Video)</label>
+                        <div class="upload-hint" style="margin-bottom: 12px;">Recommended: 1440 × 1080 px (4:3) · Max 5MB for Video, 2MB for Image</div>
                         <input type="file" id="project-cover" accept="image/*,video/mp4,video/webm" style="color:var(--white);">
                     </div>
                     
@@ -988,9 +1014,12 @@
             return `
                 <div style="padding: 16px; border: 1px solid var(--border); margin-bottom: 12px; border-radius: 4px; background: rgba(255,255,255,0.02);">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
+                        <div style="display: flex; align-items: center;">
+                            ${p.banner_url ? `<img src="${p.banner_url}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 4px; margin-right: 14px; border: 1px solid var(--border);">` : ''}
+                            <div>
                             <strong style="font-family: 'Cabinet Grotesk', sans-serif; font-size: 1.1rem; color: var(--yellow);">${p.name}</strong>
                             ${p.description ? `<p style="font-family: 'DM Sans', sans-serif; font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 4px;">${p.description}</p>` : ''}
+                            </div>
                         </div>
                         <button class="del-btn" style="position: static;" onclick="deleteClient('${p.id}')">✕</button>
                     </div>
@@ -1014,16 +1043,29 @@
         const name = document.getElementById('client-name').value.trim();
         const description = document.getElementById('client-desc').value.trim();
         const parent_id = document.getElementById('client-parent').value || null;
+        const bannerFile = document.getElementById('client-banner').files[0];
 
         if (!name) { setStatus('client-status', 'error', 'Client Name is required.'); return; }
 
         setStatus('client-status', 'loading', 'Saving...');
-        const { error } = await db.from('clients').insert({ name, description, parent_id });
+        let banner_url = null;
+        
+        if (bannerFile) {
+            const ext = bannerFile.name.split('.').pop();
+            const fileName = `client_${Date.now()}.${ext}`;
+            const { error: uploadErr } = await db.storage.from(BUCKET).upload(fileName, bannerFile, { upsert: true });
+            if (uploadErr) { setStatus('client-status', 'error', 'Banner upload failed: ' + uploadErr.message); return; }
+            const { data: urlData } = db.storage.from(BUCKET).getPublicUrl(fileName);
+            banner_url = urlData.publicUrl;
+        }
+        
+        const { error } = await db.from('clients').insert({ name, description, parent_id, banner_url });
         if (error) { setStatus('client-status', 'error', 'Error: ' + error.message); return; }
 
         setStatus('client-status', 'success', 'Client saved successfully!');
         document.getElementById('client-name').value = '';
         document.getElementById('client-desc').value = '';
+        document.getElementById('client-banner').value = '';
         loadClients();
     }
 
@@ -1045,6 +1087,30 @@
             catSelect.innerHTML = '<option value="">-- Select Category --</option>' + 
                 allCategories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
         }
+        const editCatSelect = document.getElementById('edit-category-select');
+        if (editCatSelect) {
+            editCatSelect.innerHTML = '<option value="">-- Select Category to Edit --</option>' + 
+                allCategories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        }
+    }
+
+    function loadCategoryDetails() {
+        const id = document.getElementById('edit-category-select').value;
+        const descArea = document.getElementById('edit-category-desc');
+        if (!id) { descArea.value = ''; return; }
+        const cat = allCategories.find(c => c.id === id);
+        descArea.value = cat ? (cat.description || '') : '';
+    }
+
+    async function saveCategory() {
+        const id = document.getElementById('edit-category-select').value;
+        const desc = document.getElementById('edit-category-desc').value.trim();
+        if (!id) { setStatus('category-status', 'error', 'Please select a category.'); return; }
+        
+        setStatus('category-status', 'loading', 'Updating...');
+        const { error } = await db.from('categories').update({ description: desc }).eq('id', id);
+        if (error) setStatus('category-status', 'error', 'Error: ' + error.message);
+        else { setStatus('category-status', 'success', 'Category updated!'); loadCategories(); }
     }
 
     async function loadProjects() {
@@ -1127,10 +1193,14 @@
         if (!confirm('Are you sure you want to delete this project?')) return;
         if (coverUrl) {
             const fileName = coverUrl.split('/').pop().split('?')[0];
-            await db.storage.from(BUCKET).remove([fileName]);
+            const { error: storageErr } = await db.storage.from(BUCKET).remove([fileName]);
+            if (storageErr) console.error('Storage cleanup error:', storageErr);
         }
-        await db.from('projects').delete().eq('id', id);
-        loadProjects();
+        const { error } = await db.from('projects').delete().eq('id', id);
+        if (error) {
+            alert('Failed to delete project: ' + error.message);
+        }
+        else loadProjects();
     }
     </script>
 </body>

@@ -67,15 +67,8 @@
             document.getElementById('category-title').textContent = category.name;
             document.title = category.name + ' — Control Tee';
             
-            // Optional: Dynamic descriptions based on category name
-            const descMap = {
-                'Motion Design': 'Kinetic typography, animated identities, and motion graphics that give brands a voice in time.',
-                'Poster Designs': 'Visual explorations, layout experiments, and typographic poster series.',
-                'Social & Marketing Campaigns': 'Engaging narratives and digital content built for modern marketing.',
-                'Brand Identity Systems': 'Logos, visual systems, and brand guidelines built from the ground up.',
-                'Video Editing': 'High-fidelity video content, brand films, and documentary-style storytelling.'
-            };
-            document.getElementById('category-desc').textContent = descMap[category.name] || '';
+            // Populate description dynamically from the database
+            document.getElementById('category-desc').textContent = category.description || '';
 
             // 2. Fetch projects for this category
             const { data: projects, error: projError } = await supabase
