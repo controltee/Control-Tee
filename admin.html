@@ -369,10 +369,12 @@
         <header class="admin-header">
             <div class="admin-header-logo">
                 Control Tee <span>/ Admin</span>
+                <span id="conn-status-dot" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:gray; margin-left:10px;" title="Checking connection..."></span>
             </div>
             <div class="admin-header-right">
-                <a href="index.html" class="btn" style="margin-top:0; opacity:1; transform:none; padding:10px 24px; font-size:0.7rem;">
-                    ← Back to Site
+                <button id="global-save-btn" class="btn" style="margin-top:0; opacity:1; transform:none; padding:10px 24px; font-size:0.75rem;" onclick="globalSave()">Upload Poster</button>
+                <a href="index.html" class="btn" style="margin-top:0; opacity:1; transform:none; padding:10px 24px; font-size:0.75rem; background:transparent; border-color:var(--border); color:var(--white);">
+                    Exit
                 </a>
             </div>
         </header>
@@ -409,10 +411,7 @@
                     <div class="compress-info" id="compress-info"></div>
                 </div>
 
-                <div class="action-row">
-                    <button class="btn" id="poster-upload-btn" onclick="uploadPoster()" disabled>Add to Marquee</button>
-                    <div class="status-msg" id="poster-status"></div>
-                </div>
+                <div class="status-msg" id="poster-status" style="margin-top: 16px;"></div>
 
                 <div class="progress-wrap" id="poster-progress-wrap">
                     <div class="progress-bar" id="poster-progress-bar"></div>
@@ -437,7 +436,6 @@
                     <div class="form-group">
                         <input type="url" id="yt-link" placeholder="https://www.youtube.com/watch?v=...">
                     </div>
-                    <button id="btn-add-video" class="btn" onclick="addVideo()">Save Changes</button>
                 </div>
 
                 <div class="status-msg" id="video-status" style="margin-top: 16px;"></div>
@@ -466,10 +464,7 @@
                     <div class="compress-info" id="hero-file-info"></div>
                 </div>
 
-                <div class="action-row">
-                    <button class="btn" id="hero-upload-btn" onclick="uploadHeroVideo()" disabled>Upload Hero Video</button>
-                    <div class="status-msg" id="hero-status"></div>
-                </div>
+                <div class="status-msg" id="hero-status" style="margin-top: 16px;"></div>
 
                 <div class="progress-wrap" id="hero-progress-wrap">
                     <div class="progress-bar" id="hero-progress-bar"></div>
@@ -503,7 +498,6 @@
                         <label style="display:block; margin-bottom: 8px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; font-size: 0.8rem; text-transform: uppercase;">Contact Page Intro Text</label>
                         <textarea id="edit-contact-body" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%; min-height: 120px; resize: vertical;"></textarea>
                     </div>
-                    <button id="btn-site-content" class="btn" onclick="saveSiteContent()" style="margin-top:0; width:max-content;">Save Changes</button>
                     <div class="status-msg" id="site-content-status"></div>
                 </div>
             </div>
@@ -521,7 +515,6 @@
                     
                     <textarea id="edit-category-desc" placeholder="Category description..." style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%; min-height: 100px; resize: vertical;"></textarea>
                     
-                    <button id="btn-category" class="btn" onclick="saveCategory()" style="margin-top:0; width:max-content;">Save Changes</button>
                     <div class="status-msg" id="category-status"></div>
                 </div>
             </div>
@@ -546,7 +539,6 @@
                         <input type="file" id="client-banner" accept="image/*" style="color:var(--white);">
                     </div>
                     
-                    <button id="btn-client" class="btn" onclick="saveClient()" style="margin-top:0; width:max-content;">Save Changes</button>
                     <div class="status-msg" id="client-status"></div>
                 </div>
 
@@ -580,7 +572,6 @@
                         <input type="file" id="project-cover" accept="image/*,video/mp4,video/webm" style="color:var(--white);">
                     </div>
                     
-                    <button class="btn" onclick="saveProject()" style="margin-top:0; width:max-content;" id="save-proj-btn">Save Changes</button>
                     <div class="status-msg" id="project-status"></div>
                     <div class="progress-wrap" id="proj-progress-wrap" style="display:none; margin-top: 10px;"><div class="progress-bar" id="proj-progress-bar"></div></div>
                 </div>
