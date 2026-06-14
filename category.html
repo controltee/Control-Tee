@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category — Control Tee</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="page-transition">
+
+    <nav class="sticky-back-nav">
+        <a href="index.html#work" class="btn">← Back</a>
+    </nav>
+
+    <header class="project-header">
+        <div class="container">
+            <h1 id="category-title" data-scramble>Loading...</h1>
+            <p id="category-desc"></p>
+        </div>
+    </header>
+
+    <main class="container" style="padding-bottom: 100px;">
+        <div id="projects-grid" class="portfolio-grid portfolio-grid--projects">
+            <div class="empty-state" style="grid-column: 1/-1;">Loading projects...</div>
+        </div>
+    </main>
+
+    <footer class="main-footer container">
+        <div class="social-links">
+            <a href="https://www.instagram.com/control.tee/" target="_blank" rel="noopener">Instagram</a>
+            <a href="https://www.behance.net/controltee" target="_blank" rel="noopener">Behance</a>
+            <a href="https://www.linkedin.com/in/controltee/" target="_blank" rel="noopener">LinkedIn</a>
+        </div>
+        <a href="contact.html" class="btn">Work With Us</a>
+        <p class="footer-copy">&copy; 2026 Control Tee</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://ccaggjhyeygyosbdnxmq.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjYWdnamh5ZXlneW9zYmRueG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNjMzNzksImV4cCI6MjA5NjgzOTM3OX0.Z2NJXnSNoJtugQ0Co-R_SMH3dXbErVcCcItgxj_PQxs';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function loadCategory() {
+            const params = new URLSearchParams(window.location.search);
+            const slug = params.get('id');
+            
+            if (!slug) {
+                document.getElementById('category-title').textContent = 'Category Not Found';
+                document.getElementById('projects-grid').innerHTML = '';
+                return;
+            }
+
+            // 1. Fetch category info
+            const { data: category, error: catError } = await supabase
+                .from('categories')
+                .select('*')
+                .eq('slug', slug)
+                .single();
+
+            if (catError || !category) {
+                document.getElementById('category-title').textContent = 'Category Not Found';
+                document.getElementById('projects-grid').innerHTML = '';
+                return;
+            }
+
+            document.getElementById('category-title').textContent = category.name;
+            document.title = category.name + ' — Control Tee';
+            
+            // Optional: Dynamic descriptions based on category name
+            const descMap = {
+                'Motion Design': 'Kinetic typography, animated identities, and motion graphics that give brands a voice in time.',
+                'Poster Designs': 'Visual explorations, layout experiments, and typographic poster series.',
+                'Social & Marketing Campaigns': 'Engaging narratives and digital content built for modern marketing.',
+                'Brand Identity Systems': 'Logos, visual systems, and brand guidelines built from the ground up.',
+                'Video Editing': 'High-fidelity video content, brand films, and documentary-style storytelling.'
+            };
+            document.getElementById('category-desc').textContent = descMap[category.name] || '';
+
+            // 2. Fetch projects for this category
+            const { data: projects, error: projError } = await supabase
+                .from('projects')
+                .select('*, clients(name)')
+                .eq('category_id', category.id)
+                .order('created_at', { ascending: false });
+
+            const grid = document.getElementById('projects-grid');
+            if (projError || !projects || projects.length === 0) {
+                grid.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">No projects found in this category yet.</div>';
+                return;
+            }
+
+            grid.innerHTML = projects.map(p => {
+                const isVideo = p.cover_url && p.cover_url.match(/\.(mp4|webm)$/i);
+                const mediaHtml = isVideo 
+                    ? `<video src="${p.cover_url}" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover;display:block;"></video>`
+                    : `<img src="${p.cover_url}" alt="${p.title}">`;
+
+                return `
+                    <a href="project.html?id=${p.id}" class="project-card reveal is-visible">
+                        ${mediaHtml}
+                        <div class="project-card-info">
+                            <p class="project-card-cat">${category.name} · ${p.clients ? p.clients.name : 'Independent'}</p>
+                            <h3 class="project-card-title">${p.title}</h3>
+                        </div>
+                    </a>
+                `;
+            }).join('');
+        }
+
+        loadCategory();
+    </script>
+    <script src="animations.js"></script>
+</body>
+</html>

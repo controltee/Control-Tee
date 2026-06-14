@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project — Control Tee</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="page-transition">
+
+    <nav class="sticky-back-nav">
+        <a href="javascript:history.back()" class="btn">← Back</a>
+    </nav>
+
+    <header class="project-header" style="padding-bottom: 40px;">
+        <div class="container">
+            <h1 id="project-title" data-scramble>Loading...</h1>
+        </div>
+    </header>
+
+    <section class="container" style="padding-bottom: 40px;">
+        <div class="case-meta reveal" id="project-meta" style="opacity: 0;">
+            <div class="case-meta-item">
+                <span class="case-meta-label">Client</span>
+                <span class="case-meta-value" id="meta-client">—</span>
+            </div>
+            <div class="case-meta-item">
+                <span class="case-meta-label">Category</span>
+                <span class="case-meta-value" id="meta-category">—</span>
+            </div>
+            <div class="case-meta-item">
+                <span class="case-meta-label">Year</span>
+                <span class="case-meta-value" id="meta-year">—</span>
+            </div>
+            <div class="case-meta-item">
+                <span class="case-meta-label">Share</span>
+                <span class="case-meta-value" style="cursor:pointer;" onclick="navigator.clipboard.writeText(window.location.href); alert('Link copied!')">Copy Link</span>
+            </div>
+        </div>
+    </section>
+
+    <main class="container" style="padding-bottom: 120px;">
+        <div id="project-media" class="reveal" style="width: 100%; border-radius: 8px; overflow: hidden; border: 1px solid var(--border);">
+            <!-- Media gets injected here -->
+            <div class="empty-state" style="padding: 100px;">Loading Media...</div>
+        </div>
+    </main>
+
+    <footer class="main-footer container">
+        <div class="social-links">
+            <a href="https://www.instagram.com/control.tee/" target="_blank" rel="noopener">Instagram</a>
+            <a href="https://www.behance.net/controltee" target="_blank" rel="noopener">Behance</a>
+            <a href="https://www.linkedin.com/in/controltee/" target="_blank" rel="noopener">LinkedIn</a>
+        </div>
+        <a href="contact.html" class="btn">Work With Us</a>
+        <p class="footer-copy">&copy; 2026 Control Tee</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://ccaggjhyeygyosbdnxmq.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjYWdnamh5ZXlneW9zYmRueG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNjMzNzksImV4cCI6MjA5NjgzOTM3OX0.Z2NJXnSNoJtugQ0Co-R_SMH3dXbErVcCcItgxj_PQxs';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function loadProject() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            if (!id) return;
+
+            const { data: project, error } = await supabase
+                .from('projects')
+                .select('*, categories(name), clients(name)')
+                .eq('id', id)
+                .single();
+
+            if (error || !project) {
+                document.getElementById('project-title').textContent = 'Project Not Found';
+                document.getElementById('project-media').innerHTML = '<div class="empty-state">Media not found.</div>';
+                return;
+            }
+
+            document.title = project.title + ' — Control Tee';
+            document.getElementById('project-title').textContent = project.title;
+            document.getElementById('meta-client').textContent = project.clients ? project.clients.name : 'Independent';
+            document.getElementById('meta-category').textContent = project.categories ? project.categories.name : 'Uncategorized';
+            document.getElementById('meta-year').textContent = new Date(project.created_at).getFullYear();
+            document.getElementById('project-meta').style.opacity = '1';
+
+            const isVideo = project.cover_url && project.cover_url.match(/\.(mp4|webm)$/i);
+            document.getElementById('project-media').innerHTML = isVideo 
+                ? `<video src="${project.cover_url}" autoplay muted loop playsinline style="width:100%; max-height: 85vh; object-fit:cover; display:block;"></video>`
+                : `<img src="${project.cover_url}" style="width:100%; max-height: 85vh; object-fit:cover; display:block;" alt="${project.title}">`;
+        }
+        loadProject();
+    </script>
+    <script src="animations.js"></script>
+</body>
+</html>

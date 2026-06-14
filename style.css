@@ -396,6 +396,27 @@ a, button, .folder-card {
 }
 .folder-card:hover .folder-icon-label { color: rgba(247, 213, 79, 0.85); }
 
+/* ── POSTER MARQUEE ─────────────────────────────────── */
+.poster-marquee-container { overflow: hidden; padding: 60px 0; display: none; }
+.poster-marquee {
+    display: flex;
+    width: max-content;
+    animation: dynamicMarquee 35s linear infinite;
+}
+.poster-marquee:hover { animation-play-state: paused; }
+@keyframes dynamicMarquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+}
+.poster-item {
+    height: clamp(300px, 48vh, 520px);
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    margin: 0 15px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+}
+
 /* ── PROJECT CARDS ──────────────────────────────────── */
 .portfolio-grid--projects {
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
