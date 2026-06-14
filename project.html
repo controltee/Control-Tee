@@ -12,37 +12,33 @@
         <a href="javascript:history.back()" class="btn">← Back</a>
     </nav>
 
-    <header class="project-header" style="padding-bottom: 40px;">
-        <div class="container">
-            <h1 id="project-title" data-scramble>Loading...</h1>
+    <main class="container" style="padding-bottom: 120px; padding-top: 100px;">
+        
+        <!-- 1. Project Banner / Cover -->
+        <div id="project-media" class="reveal" style="width: 100%; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 40px;">
+            <div class="empty-state" style="padding: 100px;">Loading Project...</div>
         </div>
-    </header>
 
-    <section class="container" style="padding-bottom: 40px;">
-        <div class="case-meta reveal" id="project-meta" style="opacity: 0;">
-            <div class="case-meta-item">
-                <span class="case-meta-label">Client</span>
-                <span class="case-meta-value" id="meta-client">—</span>
+        <!-- 2. Horizontal Folder Info Row -->
+        <div class="reveal" id="project-meta" style="opacity: 0; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 40px; margin-bottom: 60px; border-bottom: 1px solid var(--border); padding-bottom: 60px;">
+            <div style="flex: 1; min-width: 300px;">
+                <h1 id="project-title" data-scramble style="font-family: 'Cabinet Grotesk', sans-serif; font-size: clamp(2rem, 4vw, 3.5rem); color: var(--yellow); text-transform: uppercase; margin-bottom: 16px; line-height: 1;">Loading...</h1>
+                <p id="project-desc" style="font-family: 'DM Sans', sans-serif; font-size: 1.05rem; font-weight: 300; color: rgba(255,255,255,0.65); line-height: 1.7; max-width: 600px;"></p>
             </div>
-            <div class="case-meta-item">
-                <span class="case-meta-label">Category</span>
-                <span class="case-meta-value" id="meta-category">—</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 40px; text-align: left; align-items: flex-start;">
+                <div>
+                    <span style="display: block; font-family: 'DM Sans', sans-serif; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 3px; color: rgba(255,255,255,0.4); margin-bottom: 8px;">Client</span>
+                    <strong id="meta-client" style="font-family: 'Cabinet Grotesk', sans-serif; font-size: 1.2rem; font-weight: 700;">—</strong>
+                </div>
+                <div>
+                    <span style="display: block; font-family: 'DM Sans', sans-serif; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 3px; color: rgba(255,255,255,0.4); margin-bottom: 8px;">Date Made</span>
+                    <strong id="meta-date" style="font-family: 'Cabinet Grotesk', sans-serif; font-size: 1.2rem; font-weight: 700;">—</strong>
+                </div>
+                <div>
+                    <span style="display: block; font-family: 'DM Sans', sans-serif; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 3px; color: rgba(255,255,255,0.4); margin-bottom: 8px;">Category</span>
+                    <strong id="meta-category" style="font-family: 'Cabinet Grotesk', sans-serif; font-size: 1.2rem; font-weight: 700;">—</strong>
+                </div>
             </div>
-            <div class="case-meta-item">
-                <span class="case-meta-label">Year</span>
-                <span class="case-meta-value" id="meta-year">—</span>
-            </div>
-            <div class="case-meta-item">
-                <span class="case-meta-label">Share</span>
-                <span class="case-meta-value" style="cursor:pointer;" onclick="navigator.clipboard.writeText(window.location.href); alert('Link copied!')">Copy Link</span>
-            </div>
-        </div>
-    </section>
-
-    <main class="container" style="padding-bottom: 120px;">
-        <div id="project-media" class="reveal" style="width: 100%; border-radius: 8px; overflow: hidden; border: 1px solid var(--border);">
-            <!-- Media gets injected here -->
-            <div class="empty-state" style="padding: 100px;">Loading Media...</div>
         </div>
         
         <!-- Additional Gallery Marquee -->
@@ -86,9 +82,10 @@
 
             document.title = project.title + ' — Control Tee';
             document.getElementById('project-title').textContent = project.title;
+            document.getElementById('project-desc').innerHTML = project.description ? project.description.replace(/\n/g, '<br>') : '';
             document.getElementById('meta-client').textContent = project.clients ? project.clients.name : 'Independent';
             document.getElementById('meta-category').textContent = project.categories ? project.categories.name : 'Uncategorized';
-            document.getElementById('meta-year').textContent = new Date(project.created_at).getFullYear();
+            document.getElementById('meta-date').textContent = project.date_made || new Date(project.created_at).getFullYear();
             document.getElementById('project-meta').style.opacity = '1';
 
             const isVideo = project.cover_url && project.cover_url.match(/\.(mp4|webm)$/i);

@@ -372,7 +372,7 @@
                 <span id="conn-status-dot" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:gray; margin-left:10px;" title="Checking connection..."></span>
             </div>
             <div class="admin-header-right">
-                <button id="global-save-btn" class="btn" style="margin-top:0; opacity:1; transform:none; padding:10px 24px; font-size:0.75rem;" onclick="globalSave()">Upload Poster</button>
+                <button id="global-save-btn" class="btn" style="margin-top:0; opacity:1; transform:none; padding:10px 24px; font-size:0.75rem;" onclick="globalSave()">Save Changes</button>
                 <a href="index.html" class="btn" style="margin-top:0; opacity:1; transform:none; padding:10px 24px; font-size:0.75rem; background:transparent; border-color:var(--border); color:var(--white);">
                     Exit
                 </a>
@@ -567,6 +567,9 @@
                         <option value="">-- Select Client (Optional) --</option>
                     </select>
                     
+                    <input type="text" id="project-date" placeholder="Date Made (e.g., October 2025)" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%;">
+                    <textarea id="project-desc" placeholder="Project Description..." style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%; min-height: 100px; resize: vertical;"></textarea>
+                    
                     <div style="border: 1px dashed var(--border); padding: 20px; border-radius: 4px; background: rgba(255,255,255,0.02);">
                         <label style="display:block; margin-bottom: 8px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; letter-spacing: 1px; text-transform: uppercase; font-size: 0.8rem;">Cover Media (Image or Video)</label>
                         <div class="upload-hint" style="margin-bottom: 12px;">Recommended: 1440 × 1080 px (4:3) · Max 5MB for Video, 2MB for Image</div>
@@ -687,16 +690,6 @@
         document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
         document.getElementById('tab-' + name).classList.add('active');
         btn.classList.add('active');
-
-        const gBtn = document.getElementById('global-save-btn');
-        if (name === 'posters') gBtn.textContent = 'Upload Poster';
-        else if (name === 'videos') gBtn.textContent = 'Add Video';
-        else if (name === 'video-hero') gBtn.textContent = 'Upload Hero';
-        else if (name === 'site-content') gBtn.textContent = 'Save Site Text';
-        else if (name === 'categories') gBtn.textContent = 'Update Category';
-        else if (name === 'clients') gBtn.textContent = 'Save Client';
-        else if (name === 'projects') gBtn.textContent = 'Save Project';
-        else if (name === 'project-media') gBtn.textContent = 'Add to Gallery';
     }
 
     async function globalSave() {
@@ -1289,6 +1282,8 @@
         const title = document.getElementById('project-title').value.trim();
         const category_id = document.getElementById('project-category').value;
         const client_id = document.getElementById('project-client').value || null;
+        const date_made = document.getElementById('project-date').value.trim();
+        const description = document.getElementById('project-desc').value.trim();
         const fileInput = document.getElementById('project-cover');
         const file = fileInput.files[0];
 
@@ -1319,7 +1314,7 @@
         const { data: urlData } = db.storage.from(BUCKET).getPublicUrl(fileName);
         const cover_url = urlData.publicUrl;
 
-        const { data: dbData, error: dbErr } = await db.from('projects').insert({ title, category_id, client_id, cover_url }).select();
+        const { data: dbData, error: dbErr } = await db.from('projects').insert({ title, category_id, client_id, cover_url, date_made, description }).select();
         
         pBar.style.width = '100%';
         setTimeout(() => { pWrap.style.display = 'none'; pBar.style.width = '0%'; }, 500);
@@ -1334,6 +1329,8 @@
             document.getElementById('project-title').value = '';
             document.getElementById('project-category').value = '';
             document.getElementById('project-client').value = '';
+            document.getElementById('project-date').value = '';
+            document.getElementById('project-desc').value = '';
             fileInput.value = '';
             loadProjects();
             loadProjectMedia();
