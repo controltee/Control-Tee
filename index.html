@@ -218,8 +218,10 @@
             }
 
             // 2. Fetch Posters automatically
-            const { data: posters } = await supabase.from('posters').select('image_url').order('created_at', { ascending: false });
-            if (posters && posters.length > 0) {
+            const { data: posters, error: posterErr } = await supabase.from('posters').select('image_url').order('created_at', { ascending: false });
+            if (posterErr) {
+                console.error("Poster Load Error:", posterErr.message);
+            } else if (posters && posters.length > 0) {
                 const track = document.getElementById('dynamic-poster-track');
                 const section = document.getElementById('poster-section');
                 if (track && section) {
@@ -230,8 +232,10 @@
             }
 
             // 3. Fetch Site Text dynamically
-            const { data: textData } = await supabase.from('site_content').select('*');
-            if (textData) {
+            const { data: textData, error: textErr } = await supabase.from('site_content').select('*');
+            if (textErr) {
+                console.error("Text Load Error:", textErr.message);
+            } else if (textData) {
                 textData.forEach(item => {
                     if (item.id === 'hero_subtitle' && document.getElementById('hero-subtitle')) document.getElementById('hero-subtitle').innerHTML = item.content;
                     if (item.id === 'about_headline' && document.getElementById('about-headline')) document.getElementById('about-headline').innerHTML = item.content;

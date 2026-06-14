@@ -59,8 +59,8 @@
                 .single();
 
             if (catError || !category) {
-                document.getElementById('category-title').textContent = 'Category Not Found';
-                document.getElementById('projects-grid').innerHTML = '';
+                document.getElementById('category-title').textContent = 'Category Error';
+                document.getElementById('projects-grid').innerHTML = `<div class="empty-state" style="grid-column: 1/-1;">Error: ${catError?.message || 'Category not found.'}</div>`;
                 return;
             }
 
@@ -78,7 +78,10 @@
                 .order('created_at', { ascending: false });
 
             const grid = document.getElementById('projects-grid');
-            if (projError || !projects || projects.length === 0) {
+            if (projError) {
+                grid.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;">Database Error: ${projError.message}</div>`;
+                return;
+            } else if (!projects || projects.length === 0) {
                 grid.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">No projects found in this category yet.</div>';
                 return;
             }
