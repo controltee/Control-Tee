@@ -622,6 +622,18 @@
             if (typeof loadCategories === 'function') loadCategories();
             if (typeof loadProjects === 'function') loadProjects();
             if (typeof loadSiteContent === 'function') loadSiteContent();
+
+            // Test connection indicator
+            db.from('site_content').select('id').limit(1).then(({ error }) => {
+                const dot = document.getElementById('conn-status-dot');
+                if (error) {
+                    dot.style.backgroundColor = '#ff6b6b';
+                    dot.title = 'Database Connection Failed: ' + error.message;
+                } else {
+                    dot.style.backgroundColor = 'var(--green)';
+                    dot.title = 'Database Connected Successfully';
+                }
+            });
         }
     });
 
@@ -655,6 +667,26 @@
         document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
         document.getElementById('tab-' + name).classList.add('active');
         btn.classList.add('active');
+
+        const gBtn = document.getElementById('global-save-btn');
+        if (name === 'posters') gBtn.textContent = 'Upload Poster';
+        else if (name === 'videos') gBtn.textContent = 'Add Video';
+        else if (name === 'video-hero') gBtn.textContent = 'Upload Hero';
+        else if (name === 'site-content') gBtn.textContent = 'Save Site Text';
+        else if (name === 'categories') gBtn.textContent = 'Update Category';
+        else if (name === 'clients') gBtn.textContent = 'Save Client';
+        else if (name === 'projects') gBtn.textContent = 'Save Project';
+    }
+
+    async function globalSave() {
+        const activeTab = document.querySelector('.tab-panel.active').id;
+        if (activeTab === 'tab-posters') await uploadPoster();
+        else if (activeTab === 'tab-videos') await addVideo();
+        else if (activeTab === 'tab-video-hero') await uploadHeroVideo();
+        else if (activeTab === 'tab-site-content') await saveSiteContent();
+        else if (activeTab === 'tab-categories') await saveCategory();
+        else if (activeTab === 'tab-clients') await saveClient();
+        else if (activeTab === 'tab-projects') await saveProject();
     }
 
     /* ── STATUS HELPERS ─────────────────────────────────── */
@@ -719,13 +751,13 @@
     const posterFileInput = document.getElementById('poster-file');
     const posterPreview   = document.getElementById('poster-preview');
     const compressInfo    = document.getElementById('compress-info');
-    const uploadBtn       = document.getElementById('poster-upload-btn');
+    const getUploadBtn    = () => document.getElementById('global-save-btn');
 
     posterFileInput.addEventListener('change', async () => {
         const file = posterFileInput.files[0];
         if (!file) return;
 
-        uploadBtn.disabled = true;
+        getUploadBtn().disabled = true;
         setStatus('poster-status', 'loading', 'Compressing image…');
 
         const tempUrl = URL.createObjectURL(file);
@@ -742,7 +774,7 @@
         compressInfo.style.display = 'block';
 
         clearStatus('poster-status');
-        uploadBtn.disabled = false;
+        getUploadBtn().disabled = false;
     });
 
     const dropZone = document.getElementById('poster-drop-zone');
@@ -762,7 +794,7 @@
     async function uploadPoster() {
         if (!compressedBlob) return;
 
-        uploadBtn.disabled = true;
+        getUploadBtn().disabled = true;
         setStatus('poster-status', 'loading', 'Uploading…');
 
         const progressWrap = document.getElementById('poster-progress-wrap');
@@ -779,7 +811,7 @@
         if (uploadErr) {
             setStatus('poster-status', 'error', 'Upload failed: ' + uploadErr.message);
             progressWrap.style.display = 'none';
-            uploadBtn.disabled = false;
+            getUploadBtn().disabled = false;
             return;
         }
 
@@ -797,17 +829,17 @@
 
         if (dbErr) {
             setStatus('poster-status', 'error', 'Database error: ' + dbErr.message);
-            uploadBtn.disabled = false;
+            getUploadBtn().disabled = false;
             return;
         } else if (!dbData || dbData.length === 0) {
             setStatus('poster-status', 'error', 'Blocked by database. Please run the SQL script.');
-            uploadBtn.disabled = false;
+            getUploadBtn().disabled = false;
             return;
         }
 
         setStatus('poster-status', 'success', 'Poster added to marquee!');
-        showSavedAssurance('poster-upload-btn');
-        uploadBtn.disabled = false;
+        showSavedAssurance('global-save-btn');
+        getUploadBtn().disabled = false;
         compressedBlob = null;
         posterPreview.style.display = 'none';
         compressInfo.style.display  = 'none';
@@ -889,7 +921,7 @@
         }
 
         setStatus('video-status', 'success', 'Video added to the grid!');
-        showSavedAssurance('btn-add-video');
+        showSavedAssurance('global-save-btn');
         input.value = '';
         loadVideos();
     }
@@ -950,7 +982,6 @@
 
     /* ── HERO VIDEO UPLOAD ──────────────────────────────── */
     const heroFileInput = document.getElementById('hero-file');
-    const heroUploadBtn = document.getElementById('hero-upload-btn');
 
     heroFileInput.addEventListener('change', () => {
         const file = heroFileInput.files[0];
@@ -958,7 +989,6 @@
         const mb = (file.size / (1024 * 1024)).toFixed(1);
         document.getElementById('hero-file-info').textContent = file.name + ' · ' + mb + ' MB';
         document.getElementById('hero-file-info').style.display = 'block';
-        heroUploadBtn.disabled = false;
     });
 
     const heroZone = document.getElementById('hero-drop-zone');
@@ -978,8 +1008,9 @@
     async function uploadHeroVideo() {
         const file = heroFileInput.files[0];
         if (!file) return;
+        const heroBtn = document.getElementById('global-save-btn');
 
-        heroUploadBtn.disabled = true;
+        heroBtn.disabled = true;
         setStatus('hero-status', 'loading', 'Uploading video — this may take a moment…');
 
         const progressWrap = document.getElementById('hero-progress-wrap');
@@ -1000,7 +1031,7 @@
         if (uploadErr) {
             setStatus('hero-status', 'error', 'Upload failed: ' + uploadErr.message);
             progressWrap.style.display = 'none';
-            heroUploadBtn.disabled = false;
+            heroBtn.disabled = false;
             return;
         }
 
@@ -1014,8 +1045,8 @@
 
         setStatus('hero-status', 'success', 'Hero video uploaded! Copy the URL below into index.html.');
         document.getElementById('hero-url-display').textContent = urlData.publicUrl;
-        showSavedAssurance('hero-upload-btn');
-        heroUploadBtn.disabled = false;
+        showSavedAssurance('global-save-btn');
+        heroBtn.disabled = false;
     }
 
     /* ── UTILS ──────────────────────────────────────────── */
@@ -1124,7 +1155,7 @@
         else if (!data || data.length === 0) { setStatus('client-status', 'error', 'Blocked by database. Please run the SQL script.'); return; }
 
         setStatus('client-status', 'success', 'Client saved successfully!');
-        showSavedAssurance('btn-client');
+        showSavedAssurance('global-save-btn');
         document.getElementById('client-name').value = '';
         document.getElementById('client-desc').value = '';
         document.getElementById('client-banner').value = '';
@@ -1175,7 +1206,7 @@
         else if (!data || data.length === 0) setStatus('category-status', 'error', 'Blocked by database. Please run the SQL script.');
         else { 
             setStatus('category-status', 'success', 'Category updated!'); 
-            showSavedAssurance('btn-category'); 
+            showSavedAssurance('global-save-btn'); 
             await loadCategories(); 
             document.getElementById('edit-category-select').value = id;
         }
@@ -1205,7 +1236,7 @@
         const { data, error } = await db.from('site_content').upsert(updates).select();
         if (error) setStatus('site-content-status', 'error', 'Failed to save: ' + error.message);
         else if (!data || data.length === 0) setStatus('site-content-status', 'error', 'Blocked by database. Please run the SQL script.');
-        else { setStatus('site-content-status', 'success', 'Site text updated successfully!'); showSavedAssurance('btn-site-content'); loadSiteContent(); }
+        else { setStatus('site-content-status', 'success', 'Site text updated successfully!'); showSavedAssurance('global-save-btn'); loadSiteContent(); }
     }
 
     async function loadProjects() {
@@ -1244,7 +1275,7 @@
             return;
         }
 
-        const btn = document.getElementById('save-proj-btn');
+        const btn = document.getElementById('global-save-btn');
         btn.disabled = true;
         setStatus('project-status', 'loading', 'Uploading file...');
 
@@ -1277,7 +1308,7 @@
             setStatus('project-status', 'error', 'Blocked by database. Please run the SQL script.');
         } else {
             setStatus('project-status', 'success', 'Project saved!');
-            showSavedAssurance('save-proj-btn');
+            showSavedAssurance('global-save-btn');
             document.getElementById('project-title').value = '';
             document.getElementById('project-category').value = '';
             document.getElementById('project-client').value = '';
