@@ -463,31 +463,3 @@ function triggerHeroReveal() {
         });
     });
 })();
-
-/* ── HORIZONTAL SCROLL SLIDER (GSAP) ───────────────── */
-(function () {
-    if (typeof gsap === 'undefined') return;
-    const containers = document.querySelectorAll('.slider-container');
-    if (!containers.length) return;
-    gsap.registerPlugin(ScrollTrigger);
-    containers.forEach(container => {
-        const track = container.querySelector('.horizontal-track');
-        if (!track) return;
-        const getScrollAmount = () => {
-            const amount = track.scrollWidth - window.innerWidth + 80;
-            return amount > 0 ? -amount : 0;
-        };
-        gsap.to(track, {
-            x: getScrollAmount,
-            ease: 'none',
-            scrollTrigger: {
-                trigger: container,
-                start: 'top top',
-                end: () => '+=' + (Math.abs(getScrollAmount()) * 1.5),
-                pin: true,
-                scrub: 1,
-                invalidateOnRefresh: true
-            }
-        });
-    });
-})();

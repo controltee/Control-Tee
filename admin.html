@@ -472,11 +472,13 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
     /* ── CONFIG ─────────────────────────────────────────── */
-    const SUPABASE_URL      = 'https://ccaggjhyeygyosbdnxmq.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjYWdnamh5ZXlneW9zYmRueG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNjMzNzksImV4cCI6MjA5NjgzOTM3OX0.Z2NJXnSNoJtugQ0Co-R_SMH3dXbErVcCcItgxj_PQxs';
+    // TODO: Replace with environment variables during your fresh setup
+    const SUPABASE_URL      = 'https://your-project.supabase.co';
+    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const ADMIN_PASSWORD   = 'controltee2026';
+    // TODO: Shift to actual Supabase Authentication
+    const ADMIN_PASSWORD   = 'YOUR_ADMIN_PASSWORD';
     const BUCKET           = 'portfolio_assets';
     const MAX_COMPRESS_PX  = 1800;
     const COMPRESS_QUALITY = 0.82;
