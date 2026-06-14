@@ -26,6 +26,13 @@ body {
     overflow-x: hidden;
     padding-bottom: 44px;
     cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><path d='M3,2 L3,18 L8,14 L11,21 L14,20 L11,13 L17,13 Z' fill='%23f7d54f' stroke='%23000' stroke-width='1.5' stroke-linejoin='round'/></svg>") 3 2, auto;
+    transition: font-size 0.3s ease, background-color 0.3s ease;
+}
+/* ── PRIVACY PROTECTION ── */
+img, video {
+    -webkit-user-drag: none;
+    user-select: none;
+    -webkit-touch-callout: none;
 }
 input, textarea, select { cursor: text; }
 a, button, .folder-card {
@@ -462,6 +469,11 @@ a, button, .folder-card {
     from { transform: translateX(0); }
     to   { transform: translateX(-50%); }
 }
+.partners-track.reverse-marquee { animation: marqueeReverse 28s linear infinite; }
+@keyframes marqueeReverse {
+    from { transform: translateX(-50%); }
+    to   { transform: translateX(0); }
+}
 .partner-logo {
     height: 68px;
     width: auto;
@@ -623,6 +635,41 @@ a, button, .folder-card {
 /* ── SCROLL REVEAL ──────────────────────────────────── */
 .reveal { opacity: 0; transform: translateY(38px); transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1); }
 .reveal.is-visible { opacity: 1; transform: translateY(0); }
+
+/* ── ACCESSIBILITY WIDGET ───────────────────────────── */
+.a11y-widget {
+    position: fixed;
+    top: 24px; right: 24px;
+    z-index: 9999;
+}
+.a11y-btn {
+    background: rgba(0,0,0,0.6);
+    border: 1px solid var(--border);
+    color: var(--yellow);
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 0 15px rgba(247,213,79,0.15);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.a11y-btn:hover {
+    box-shadow: 0 0 25px rgba(247,213,79,0.6);
+    transform: scale(1.05);
+}
+.a11y-menu {
+    display: none; position: absolute;
+    top: 50px; right: 0;
+    background: rgba(0,0,0,0.9);
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 12px; flex-direction: column; gap: 10px;
+    backdrop-filter: blur(12px); min-width: 160px;
+}
+.a11y-menu.open { display: flex; }
+.a11y-menu button { background: none; border: none; color: var(--white); text-align: left; font-family: 'DM Sans', sans-serif; font-size: 0.8rem; transition: color 0.2s ease; }
+.a11y-menu button:hover { color: var(--yellow); }
+body.large-text { font-size: 1.15rem; }
+body.high-contrast { --black: #000; --white: #fff; --yellow: #fff200; --green: #00ff00; --border: #ffffff; }
 
 /* ── DESKTOP TASKBAR ────────────────────────────────── */
 .desktop-taskbar {

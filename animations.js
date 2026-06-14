@@ -111,20 +111,20 @@ function typeWriter(el, text, speed, onComplete) {
     }
 
     function step() {
-        count = Math.min(count + Math.floor(Math.random() * 4) + 1, 100);
+        count = Math.min(count + Math.floor(Math.random() * 9) + 4, 100);
         if (counter) counter.textContent = count + '%';
         if (fill)    fill.style.width    = count + '%';
 
         if (count >= 35 && !taglineStarted && tagline) {
             taglineStarted = true;
-            typeWriter(tagline, 'Entering the creative space...', 65, () => {
+            typeWriter(tagline, 'Entering the creative space...', 35, () => {
                 taglineCompleted = true;
                 tryDismiss();
             });
         }
 
         if (count < 100) {
-            setTimeout(step, Math.random() * 60 + 45);
+            setTimeout(step, Math.random() * 25 + 10);
         } else {
             counterCompleted = true;
             tryDismiss();
@@ -274,6 +274,33 @@ function triggerHeroReveal() {
             inner.style.transform  = 'rotateY(0deg) rotateX(0deg) scale(1)';
             setTimeout(() => { inner.style.transition = ''; }, 450);
         });
+    });
+})();
+
+/* ── PRIVACY (NO RIGHT CLICK / DRAG) ────────────────── */
+document.addEventListener('contextmenu', e => {
+    if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO') {
+        e.preventDefault();
+    }
+});
+
+/* ── ACCESSIBILITY WIDGET LOGIC ─────────────────────── */
+(function() {
+    const toggleBtn = document.getElementById('a11y-toggle');
+    const menu = document.getElementById('a11y-menu');
+    const textBtn = document.getElementById('a11y-text-btn');
+    const contrastBtn = document.getElementById('a11y-contrast-btn');
+
+    if (!toggleBtn || !menu) return;
+
+    toggleBtn.addEventListener('click', () => {
+        menu.classList.toggle('open');
+    });
+    textBtn.addEventListener('click', () => {
+        document.body.classList.toggle('large-text');
+    });
+    contrastBtn.addEventListener('click', () => {
+        document.body.classList.toggle('high-contrast');
     });
 })();
 

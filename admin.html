@@ -303,6 +303,10 @@
 
         /* ── LOCK SCREEN OVERRIDE ──────────────────────── */
         #auth-overlay {
+            position: fixed; inset: 0; z-index: 9999;
+            background: var(--black);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 15px;
             cursor: auto;
         }
         #auth-overlay * {
@@ -331,28 +335,32 @@
 
     <!-- ── AUTH OVERLAY ─────────────────────────────────── -->
     <div id="auth-overlay">
-        <div class="preloader-folder">
-            <div class="folder-tab"></div>
-            <div class="folder-body"></div>
-        </div>
         <h2 id="auth-heading" style="
             font-family: 'Cabinet Grotesk', sans-serif;
             color: var(--yellow);
             font-size: 2rem;
             font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: -1px;
+            letter-spacing: -1px; margin-bottom: 20px;
         ">Admin Access</h2>
 
+        <input
+            type="email"
+            id="admin-email"
+            placeholder="Admin Email"
+            autocomplete="username"
+            style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--white); min-width: 260px; margin-bottom: 8px;"
+        >
         <input
             type="password"
             id="admin-pass"
             placeholder="Enter password"
             autocomplete="current-password"
             onkeydown="if(event.key==='Enter') checkAuth()"
+            style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--white); min-width: 260px;"
         >
-        <button id="unlock-btn" onclick="checkAuth()">Unlock</button>
-        <p id="auth-error">Incorrect password. Try again.</p>
+        <button id="unlock-btn" class="btn" style="margin-top: 10px; min-width: 260px;" onclick="checkAuth()">Unlock</button>
+        <p id="auth-error" style="display:none; color:#ff6b6b; font-size:0.8rem; margin-top:10px;">Incorrect password. Try again.</p>
     </div>
 
     <!-- ── ADMIN SHELL (revealed after auth) ────────────── -->
@@ -375,6 +383,8 @@
                 <button class="admin-tab active" onclick="switchTab('posters', this)">Posters</button>
                 <button class="admin-tab" onclick="switchTab('videos', this)">Videos</button>
                 <button class="admin-tab" onclick="switchTab('video-hero', this)">Hero Video</button>
+                <button class="admin-tab" onclick="switchTab('clients', this)">Clients</button>
+                <button class="admin-tab" onclick="switchTab('projects', this)">Projects</button>
             </div>
 
             <!-- ── POSTERS TAB ─────────────────────────── -->
@@ -466,6 +476,40 @@
                 </div>
             </div>
 
+            <!-- ── CLIENTS TAB (CMS Blueprint) ─────────── -->
+            <div class="tab-panel" id="tab-clients">
+                <div class="admin-section-title">Manage Clients</div>
+                <div class="admin-section-desc">Create top-level clients (e.g., Riara University) or nested subclients (e.g., RUSA, RUSO). Add descriptions and banners here.</div>
+                
+                <div style="display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 600px; margin-bottom: 40px;">
+                    <input type="text" id="client-name" placeholder="Client Name (e.g., Riara University)" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%;">
+                    <textarea id="client-desc" placeholder="Optional Description..." style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%; min-height: 80px; resize: vertical;"></textarea>
+                    
+                    <select id="client-parent" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: var(--black); color: var(--white); width: 100%;">
+                        <option value="">-- Top Level Client (No Parent) --</option>
+                        <!-- Populated via JS -->
+                    </select>
+                    
+                    <button class="btn" onclick="saveClient()" style="margin-top:0; width:max-content;">Save Client</button>
+                    <div class="status-msg" id="client-status"></div>
+                </div>
+
+                <div style="margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--border);">
+                    <p class="existing-label">Client Directory</p>
+                    <div id="client-list" style="margin-top: 16px;">
+                        <div class="empty-state">Loading…</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── PROJECTS TAB (CMS Blueprint) ────────── -->
+            <div class="tab-panel" id="tab-projects">
+                <div class="admin-section-title">Manage Projects</div>
+                <div class="admin-section-desc">Upload final deliverables and link them to a Specific Category folder and a specific Client/Subclient.</div>
+                
+                <div class="empty-state" style="padding: 60px 0; border: 1px dashed var(--border); border-radius: 4px;">Supabase CMS Integration goes here.</div>
+            </div>
+
         </div><!-- /admin-body -->
     </div><!-- /admin-shell -->
 
@@ -477,23 +521,41 @@
     const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // TODO: Shift to actual Supabase Authentication
-    const ADMIN_PASSWORD   = 'YOUR_ADMIN_PASSWORD';
     const BUCKET           = 'portfolio_assets';
     const MAX_COMPRESS_PX  = 1800;
     const COMPRESS_QUALITY = 0.82;
 
     /* ── AUTH ───────────────────────────────────────────── */
-    function checkAuth() {
-        const val = document.getElementById('admin-pass').value;
-        if (val === ADMIN_PASSWORD) {
+    // Auto-check if already logged in when the page loads
+    window.addEventListener('DOMContentLoaded', async () => {
+        const { data: { session } } = await db.auth.getSession();
+        if (session) {
             document.getElementById('auth-overlay').style.display = 'none';
             const shell = document.getElementById('admin-shell');
             shell.style.display = 'block';
             loadPosters();
             loadVideos();
+            if (typeof loadClients === 'function') loadClients();
+        }
+    });
+
+    async function checkAuth() {
+        const email = document.getElementById('admin-email').value.trim();
+        const pass = document.getElementById('admin-pass').value;
+        
+        const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
+        
+        if (!error && data.session) {
+            document.getElementById('auth-overlay').style.display = 'none';
+            const shell = document.getElementById('admin-shell');
+            shell.style.display = 'block';
+            loadPosters();
+            loadVideos();
+            if (typeof loadClients === 'function') loadClients();
         } else {
-            document.getElementById('auth-error').style.display = 'block';
+            const errEl = document.getElementById('auth-error');
+            errEl.textContent = error ? error.message : 'Login failed.';
+            errEl.style.display = 'block';
             document.getElementById('admin-pass').focus();
         }
     }
