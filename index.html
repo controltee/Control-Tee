@@ -43,7 +43,7 @@
         <div class="hero-content">
             <img src="assets/logo.png" alt="Control Tee Logo" class="hero-logo">
             <h1 class="hero-title" data-scramble>CONTROL TEE</h1>
-            <p class="hero-subtitle">Marketing Campaigns &nbsp;·&nbsp; Brand Identity &nbsp;·&nbsp; Motion Design</p>
+            <p class="hero-subtitle" id="hero-subtitle">Marketing Campaigns &nbsp;·&nbsp; Brand Identity &nbsp;·&nbsp; Motion Design</p>
             <a href="#work" class="btn">View Work</a>
         </div>
     </header>
@@ -78,8 +78,8 @@
             <div class="about-grid reveal">
                 <div class="about-tag">CTRL<br>+T</div>
                 <div>
-                    <h2 class="about-headline">Creativity<br>meets <em>transformation.</em></h2>
-                    <div class="about-body">
+                    <h2 class="about-headline" id="about-headline">Creativity<br>meets <em>transformation.</em></h2>
+                    <div class="about-body" id="about-body">
                         <p>At Control Tee, we're inspired by the design shortcut CTRL+T — the command to transform. Our name reflects what we do best: turn ideas into impactful visual identities.</p>
                         <p>We're a design studio built on design thinking and originality, specialising in shaping your image so you stand out in today's visual culture.</p>
                     </div>
@@ -227,6 +227,16 @@
                     track.innerHTML = html + html; // Duplicate to create the infinite loop
                     section.style.display = 'block'; // Unhide section once loaded
                 }
+            }
+
+            // 3. Fetch Site Text dynamically
+            const { data: textData } = await supabase.from('site_content').select('*');
+            if (textData) {
+                textData.forEach(item => {
+                    if (item.id === 'hero_subtitle' && document.getElementById('hero-subtitle')) document.getElementById('hero-subtitle').innerHTML = item.content;
+                    if (item.id === 'about_headline' && document.getElementById('about-headline')) document.getElementById('about-headline').innerHTML = item.content;
+                    if (item.id === 'about_body' && document.getElementById('about-body')) document.getElementById('about-body').innerHTML = item.content;
+                });
             }
         }
         loadDynamicContent();

@@ -21,7 +21,7 @@
             <!-- Left: info -->
             <div>
                 <h1 class="contact-headline" data-scramble>Let's Work.</h1>
-                <p class="contact-body">
+                <p class="contact-body" id="contact-body">
                     Control Tee is a creative studio built for bold brands.
                     If you have a project in mind — a campaign, an identity,
                     or a story that needs to move — reach out and let's make it happen.
@@ -122,6 +122,24 @@
         <p class="footer-copy">&copy; 2026 Control Tee</p>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://ccaggjhyeygyosbdnxmq.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjYWdnamh5ZXlneW9zYmRueG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNjMzNzksImV4cCI6MjA5NjgzOTM3OX0.Z2NJXnSNoJtugQ0Co-R_SMH3dXbErVcCcItgxj_PQxs';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function loadDynamicContent() {
+            const { data: textData } = await supabase.from('site_content').select('*');
+            if (textData) {
+                textData.forEach(item => {
+                    if (item.id === 'contact_body' && document.getElementById('contact-body')) {
+                        document.getElementById('contact-body').innerHTML = item.content;
+                    }
+                });
+            }
+        }
+        loadDynamicContent();
+    </script>
     <script src="animations.js"></script>
 </body>
 </html>

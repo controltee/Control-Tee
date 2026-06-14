@@ -383,6 +383,7 @@
                 <button class="admin-tab active" onclick="switchTab('posters', this)">Posters</button>
                 <button class="admin-tab" onclick="switchTab('videos', this)">Videos</button>
                 <button class="admin-tab" onclick="switchTab('video-hero', this)">Hero Video</button>
+                <button class="admin-tab" onclick="switchTab('site-content', this)">Site Text</button>
                 <button class="admin-tab" onclick="switchTab('categories', this)">Categories</button>
                 <button class="admin-tab" onclick="switchTab('clients', this)">Clients</button>
                 <button class="admin-tab" onclick="switchTab('projects', this)">Projects</button>
@@ -391,8 +392,11 @@
             <!-- ── POSTERS TAB ─────────────────────────── -->
             <div class="tab-panel active" id="tab-posters">
 
-                <div class="admin-section-title">Upload Poster</div>
-                <div class="admin-section-desc">Recommended: 2160 × 2700 px (4:5) or 1:1 square · JPEG / PNG · Auto-compressed before upload</div>
+                <div class="admin-section-title">Homepage Poster Marquee</div>
+                <div class="admin-section-desc">
+                    <strong>⚠️ NOTE:</strong> This tab ONLY manages the infinite scrolling marquee on the homepage. To add posters into the "Poster Designs" project folder, use the <strong>Projects</strong> tab.<br><br>
+                    Recommended: 2160 × 2700 px (4:5) · For the best looping effect, upload <strong>6 to 8 posters</strong>.
+                </div>
 
                 <div class="upload-zone" id="poster-drop-zone">
                     <input type="file" id="poster-file" accept="image/jpeg,image/png,image/webp">
@@ -474,6 +478,33 @@
                 <div style="margin-top: 40px; padding: 20px; border: 1px solid var(--border); border-radius: 4px; background: rgba(255,255,255,0.02);">
                     <p class="existing-label" style="margin-bottom: 12px;">After uploading, copy this URL into index.html:</p>
                     <code id="hero-url-display" style="font-family: monospace; font-size: 0.82rem; color: var(--yellow); word-break: break-all;">—</code>
+                </div>
+            </div>
+
+            <!-- ── SITE CONTENT TAB ────────────────────── -->
+            <div class="tab-panel" id="tab-site-content">
+                <div class="admin-section-title">Edit Site Text</div>
+                <div class="admin-section-desc">Customize the main paragraphs and subtitles across your website. You can use basic HTML like &lt;br&gt; for line breaks or &lt;em&gt; for italics.</div>
+                
+                <div style="display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 800px; margin-bottom: 40px;">
+                    <div>
+                        <label style="display:block; margin-bottom: 8px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; font-size: 0.8rem; text-transform: uppercase;">Homepage Hero Subtitle</label>
+                        <input type="text" id="edit-hero-subtitle" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom: 8px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; font-size: 0.8rem; text-transform: uppercase;">Homepage About Headline</label>
+                        <input type="text" id="edit-about-headline" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom: 8px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; font-size: 0.8rem; text-transform: uppercase;">Homepage About Body</label>
+                        <textarea id="edit-about-body" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%; min-height: 120px; resize: vertical;"></textarea>
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom: 8px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; font-size: 0.8rem; text-transform: uppercase;">Contact Page Intro Text</label>
+                        <textarea id="edit-contact-body" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%; min-height: 120px; resize: vertical;"></textarea>
+                    </div>
+                    <button class="btn" onclick="saveSiteContent()" style="margin-top:0; width:max-content;">Save Site Text</button>
+                    <div class="status-msg" id="site-content-status"></div>
                 </div>
             </div>
 
@@ -590,6 +621,7 @@
             if (typeof loadClients === 'function') loadClients();
             if (typeof loadCategories === 'function') loadCategories();
             if (typeof loadProjects === 'function') loadProjects();
+            if (typeof loadSiteContent === 'function') loadSiteContent();
         }
     });
 
@@ -608,6 +640,7 @@
             if (typeof loadClients === 'function') loadClients();
             if (typeof loadCategories === 'function') loadCategories();
             if (typeof loadProjects === 'function') loadProjects();
+            if (typeof loadSiteContent === 'function') loadSiteContent();
         } else {
             const errEl = document.getElementById('auth-error');
             errEl.textContent = error ? error.message : 'Login failed.';
@@ -1111,6 +1144,32 @@
         const { error } = await db.from('categories').update({ description: desc }).eq('id', id);
         if (error) setStatus('category-status', 'error', 'Error: ' + error.message);
         else { setStatus('category-status', 'success', 'Category updated!'); loadCategories(); }
+    }
+
+    /* ── SITE CONTENT CMS ───────────────────────────────── */
+    async function loadSiteContent() {
+        const { data } = await db.from('site_content').select('*');
+        if (data) {
+            data.forEach(item => {
+                if (item.id === 'hero_subtitle') document.getElementById('edit-hero-subtitle').value = item.content;
+                if (item.id === 'about_headline') document.getElementById('edit-about-headline').value = item.content;
+                if (item.id === 'about_body') document.getElementById('edit-about-body').value = item.content;
+                if (item.id === 'contact_body') document.getElementById('edit-contact-body').value = item.content;
+            });
+        }
+    }
+
+    async function saveSiteContent() {
+        setStatus('site-content-status', 'loading', 'Saving text...');
+        const updates = [
+            { id: 'hero_subtitle', content: document.getElementById('edit-hero-subtitle').value },
+            { id: 'about_headline', content: document.getElementById('edit-about-headline').value },
+            { id: 'about_body', content: document.getElementById('edit-about-body').value },
+            { id: 'contact_body', content: document.getElementById('edit-contact-body').value }
+        ];
+        const { error } = await db.from('site_content').upsert(updates);
+        if (error) setStatus('site-content-status', 'error', 'Failed to save: ' + error.message);
+        else setStatus('site-content-status', 'success', 'Site text updated successfully!');
     }
 
     async function loadProjects() {
