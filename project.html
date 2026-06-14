@@ -22,7 +22,7 @@
         <!-- 2. Horizontal Folder Info Row -->
         <div class="reveal" id="project-meta" style="opacity: 0; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 40px; margin-bottom: 60px; border-bottom: 1px solid var(--border); padding-bottom: 60px;">
             <div style="flex: 1; min-width: 300px;">
-                <h1 id="project-title" data-scramble style="font-family: 'Cabinet Grotesk', sans-serif; font-size: clamp(2rem, 4vw, 3.5rem); color: var(--yellow); text-transform: uppercase; margin-bottom: 16px; line-height: 1;">Loading...</h1>
+                <h1 id="project-title" style="font-family: 'Cabinet Grotesk', sans-serif; font-size: clamp(2rem, 4vw, 3.5rem); color: var(--yellow); text-transform: uppercase; margin-bottom: 16px; line-height: 1;">Loading...</h1>
                 <p id="project-desc" style="font-family: 'DM Sans', sans-serif; font-size: 1.05rem; font-weight: 300; color: rgba(255,255,255,0.65); line-height: 1.7; max-width: 600px;"></p>
             </div>
             <div style="display: flex; flex-wrap: wrap; gap: 40px; text-align: left; align-items: flex-start;">
@@ -61,47 +61,62 @@
     <script>
         const SUPABASE_URL = 'https://ccaggjhyeygyosbdnxmq.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjYWdnamh5ZXlneW9zYmRueG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNjMzNzksImV4cCI6MjA5NjgzOTM3OX0.Z2NJXnSNoJtugQ0Co-R_SMH3dXbErVcCcItgxj_PQxs';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         async function loadProject() {
-            const params = new URLSearchParams(window.location.search);
-            const id = params.get('id');
-            if (!id) return;
+            try {
+                if (!window.supabase) throw new Error("Supabase failed to load.");
+                const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                
+                const params = new URLSearchParams(window.location.search);
+                const id = params.get('id');
+                if (!id) {
+                    document.getElementById('project-title').textContent = 'Project Not Found';
+                    document.getElementById('project-media').innerHTML = '<div class="empty-state">Invalid URL.</div>';
+                    return;
+                }
 
-            const { data: project, error } = await supabase
-                .from('projects')
-                .select('*, categories(name), clients(name)')
-                .eq('id', id)
-                .single();
+                const { data: project, error } = await supabase
+                    .from('projects')
+                    .select('*, categories(name), clients(name)')
+                    .eq('id', id)
+                    .single();
 
-            if (error || !project) {
-                document.getElementById('project-title').textContent = 'Project Error';
-                document.getElementById('project-media').innerHTML = `<div class="empty-state">Error: ${error?.message || 'Media not found.'}</div>`;
-                return;
-            }
+                if (error || !project) {
+                    document.getElementById('project-title').textContent = 'Project Error';
+                    document.getElementById('project-media').innerHTML = `<div class="empty-state">Error: ${error?.message || 'Media not found.'}</div>`;
+                    return;
+                }
 
-            document.title = project.title + ' — Control Tee';
-            document.getElementById('project-title').textContent = project.title;
-            document.getElementById('project-desc').innerHTML = project.description ? project.description.replace(/\n/g, '<br>') : '';
-            document.getElementById('meta-client').textContent = project.clients ? project.clients.name : 'Independent';
-            document.getElementById('meta-category').textContent = project.categories ? project.categories.name : 'Uncategorized';
-            document.getElementById('meta-date').textContent = project.date_made || new Date(project.created_at).getFullYear();
-            document.getElementById('project-meta').style.opacity = '1';
+                const titleEl = document.getElementById('project-title');
+                titleEl.textContent = project.title;
+                if (window.scrambleText) window.scrambleText(titleEl);
 
-            const isVideo = project.cover_url && project.cover_url.match(/\.(mp4|webm)$/i);
-            document.getElementById('project-media').innerHTML = isVideo 
-                ? `<video src="${project.cover_url}" autoplay muted loop playsinline style="width:100%; max-height: 85vh; object-fit:cover; display:block;"></video>`
-                : `<img src="${project.cover_url}" style="width:100%; max-height: 85vh; object-fit:cover; display:block;" alt="${project.title}">`;
+                document.title = project.title + ' — Control Tee';
+                document.getElementById('project-desc').innerHTML = project.description ? project.description.replace(/\n/g, '<br>') : '';
+                document.getElementById('meta-client').textContent = project.clients ? project.clients.name : 'Independent';
+                document.getElementById('meta-category').textContent = project.categories ? project.categories.name : 'Uncategorized';
+                document.getElementById('meta-date').textContent = project.date_made || new Date(project.created_at).getFullYear();
+                document.getElementById('project-meta').style.opacity = '1';
 
-            // Load Additional Gallery Images
-            const { data: mediaFiles, error: mediaErr } = await supabase.from('project_media').select('media_url').eq('project_id', id);
-            if (mediaErr) {
-                console.error("Gallery Load Error:", mediaErr.message);
-            } else if (mediaFiles && mediaFiles.length > 0) {
-                const track = document.getElementById('gallery-track');
-                let html = mediaFiles.map(m => `<img src="${m.media_url}" alt="${project.title} Gallery" class="poster-item">`).join('');
-                track.innerHTML = html + html; // duplicate for infinite loop
-                document.getElementById('project-gallery-container').style.display = 'block';
+                const isVideo = project.cover_url && project.cover_url.match(/\.(mp4|webm)$/i);
+                document.getElementById('project-media').innerHTML = isVideo 
+                    ? `<video src="${project.cover_url}" autoplay muted loop playsinline style="width:100%; max-height: 85vh; object-fit:cover; display:block;"></video>`
+                    : `<img src="${project.cover_url}" style="width:100%; max-height: 85vh; object-fit:cover; display:block;" alt="${project.title}">`;
+
+                // Load Additional Gallery Images
+                const { data: mediaFiles, error: mediaErr } = await supabase.from('project_media').select('media_url').eq('project_id', id);
+                if (mediaErr) {
+                    console.error("Gallery Load Error:", mediaErr.message);
+                } else if (mediaFiles && mediaFiles.length > 0) {
+                    const track = document.getElementById('gallery-track');
+                    let html = mediaFiles.map(m => `<img src="${m.media_url}" alt="${project.title} Gallery" class="poster-item">`).join('');
+                    track.innerHTML = html + html; // duplicate for infinite loop
+                    document.getElementById('project-gallery-container').style.display = 'block';
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('project-title').textContent = 'System Error';
+                document.getElementById('project-media').innerHTML = `<div class="empty-state">JS Exception: ${err.message}</div>`;
             }
         }
         loadProject();
