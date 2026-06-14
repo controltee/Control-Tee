@@ -79,6 +79,7 @@
                     .from('projects')
                     .select('*, clients(name)')
                     .eq('category_id', category.id)
+                    .order('sort_order', { ascending: true })
                     .order('created_at', { ascending: false });
 
                 const grid = document.getElementById('projects-grid');

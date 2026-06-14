@@ -301,6 +301,13 @@
             transition: width 0.15s linear;
         }
 
+        /* ── DRAG AND DROP ─────────────────────────────── */
+        .project-row { cursor: grab; transition: box-shadow 0.2s; }
+        .project-row:active { cursor: grabbing; }
+        .project-row.dragging { opacity: 0.4; border: 1px dashed var(--yellow) !important; background: rgba(247,213,79,0.05) !important; }
+        .drag-handle { color: rgba(255,255,255,0.2); font-size: 1.4rem; padding-right: 10px; transition: color 0.2s ease; cursor: inherit; user-select: none; }
+        .project-row:hover .drag-handle { color: var(--yellow); }
+
         /* ── LOCK SCREEN OVERRIDE ──────────────────────── */
         #auth-overlay {
             position: fixed; inset: 0; z-index: 9999;
@@ -553,10 +560,15 @@
 
             <!-- ── PROJECTS TAB (CMS Blueprint) ────────── -->
             <div class="tab-panel" id="tab-projects">
-                <div class="admin-section-title">Manage Projects</div>
-                <div class="admin-section-desc">Upload final deliverables and link them to a Specific Category folder and a specific Client/Subclient.</div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 20px;">
+                    <div>
+                        <div class="admin-section-title" id="project-section-title">Manage Projects</div>
+                        <div class="admin-section-desc" style="margin-bottom:0;">Upload final deliverables and link them to a Specific Category folder and a specific Client/Subclient.</div>
+                    </div>
+                    <button id="cancel-edit-proj-btn" class="btn" style="display:none; margin-top:0; padding: 6px 14px; font-size: 0.7rem; border-color: #ff6b6b; color: #ff6b6b;" onclick="cancelEditProject()">Cancel Edit</button>
+                </div>
                 
-                <div style="display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 600px; margin-bottom: 40px;">
+                <div style="display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 600px; margin-bottom: 40px; margin-top: 20px;">
                     <input type="text" id="project-title" placeholder="Project Title" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%;">
                     
                     <select id="project-category" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: var(--black); color: var(--white); width: 100%;">
@@ -571,7 +583,7 @@
                     <textarea id="project-desc" placeholder="Project Description..." style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%; min-height: 100px; resize: vertical;"></textarea>
                     
                     <div style="border: 1px dashed var(--border); padding: 20px; border-radius: 4px; background: rgba(255,255,255,0.02);">
-                        <label style="display:block; margin-bottom: 8px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; letter-spacing: 1px; text-transform: uppercase; font-size: 0.8rem;">Cover Media (Image or Video)</label>
+                        <label id="project-cover-label" style="display:block; margin-bottom: 8px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; letter-spacing: 1px; text-transform: uppercase; font-size: 0.8rem;">Cover Media (Image or Video)</label>
                         <div class="upload-hint" style="margin-bottom: 12px;">Recommended: 1440 × 1080 px (4:3) · Max 5MB for Video, 2MB for Image</div>
                         <input type="file" id="project-cover" accept="image/*,video/mp4,video/webm" style="color:var(--white);">
                     </div>
@@ -1186,6 +1198,9 @@
 
     /* ── PROJECTS CMS ───────────────────────────────────── */
     let allCategories = [];
+    let allProjects = [];
+    let currentEditProjectId = null;
+    let currentEditProjectCover = null;
     
     async function loadCategories() {
         const { data } = await db.from('categories').select('*').order('name');
@@ -1257,14 +1272,19 @@
     async function loadProjects() {
         const list = document.getElementById('project-list');
         list.innerHTML = '<div class="empty-state">Loading…</div>';
-        const { data, error } = await db.from('projects').select('*, categories(name), clients(name)').order('created_at', { ascending: false });
+        const { data, error } = await db.from('projects')
+            .select('*, categories(name), clients(name)')
+            .order('sort_order', { ascending: true })
+            .order('created_at', { ascending: false });
         if (error || !data || data.length === 0) {
             list.innerHTML = '<div class="empty-state">No projects found.</div>';
             return;
         }
+        allProjects = data; // Cache for editing
         list.innerHTML = data.map(p => `
-            <div style="padding: 16px; border: 1px solid var(--border); margin-bottom: 12px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
+            <div class="project-row" data-id="${p.id}" draggable="true" style="padding: 16px; border: 1px solid var(--border); margin-bottom: 12px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
                 <div style="display:flex; gap: 16px; align-items: center;">
+                    <div class="drag-handle" title="Drag to reorder">☰</div>
                     ${p.cover_url ? (p.cover_url.match(/\.(mp4|webm)$/i) ? `<video src="${p.cover_url}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;" muted></video>` : `<img src="${p.cover_url}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">`) : ''}
                     <div>
                         <strong style="color: var(--yellow); font-family: 'Cabinet Grotesk', sans-serif;">${p.title}</strong>
@@ -1273,9 +1293,94 @@
                         </div>
                     </div>
                 </div>
-                <button class="del-btn" style="position: static;" onclick="deleteProject('${p.id}', '${p.cover_url}')">✕</button>
+                <div style="display: flex; gap: 8px;">
+                    <button class="del-btn" style="position: static; border-color: var(--yellow); color: var(--yellow);" onclick="editProject('${p.id}')">✎ Edit</button>
+                    <button class="del-btn" style="position: static;" onclick="deleteProject('${p.id}', '${p.cover_url}')">✕</button>
+                </div>
             </div>
         `).join('');
+        attachDragAndDrop();
+    }
+
+    function attachDragAndDrop() {
+        const list = document.getElementById('project-list');
+        const rows = list.querySelectorAll('.project-row');
+        
+        rows.forEach(row => {
+            row.addEventListener('dragstart', () => row.classList.add('dragging'));
+            row.addEventListener('dragend', () => {
+                row.classList.remove('dragging');
+                saveProjectOrder();
+            });
+        });
+
+        list.addEventListener('dragover', e => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(list, e.clientY);
+            const dragging = document.querySelector('.dragging');
+            if (!dragging) return;
+            if (afterElement == null) {
+                list.appendChild(dragging);
+            } else {
+                list.insertBefore(dragging, afterElement);
+            }
+        });
+    }
+
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.project-row:not(.dragging)')];
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
+            else return closest;
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    async function saveProjectOrder() {
+        const rows = document.querySelectorAll('.project-row');
+        setStatus('project-status', 'loading', 'Saving new order...');
+        
+        const promises = Array.from(rows).map((row, index) => db.from('projects').update({ sort_order: index }).eq('id', row.dataset.id));
+        const results = await Promise.all(promises);
+        
+        if (results.some(res => res.error)) setStatus('project-status', 'error', 'Failed to save some reorders.');
+        else { setStatus('project-status', 'success', 'Project order updated!'); showSavedAssurance('global-save-btn'); }
+    }
+
+    function editProject(id) {
+        const p = allProjects.find(x => x.id === id);
+        if (!p) return;
+        currentEditProjectId = p.id;
+        currentEditProjectCover = p.cover_url;
+
+        document.getElementById('project-title').value = p.title || '';
+        document.getElementById('project-category').value = p.category_id || '';
+        document.getElementById('project-client').value = p.client_id || '';
+        document.getElementById('project-date').value = p.date_made || '';
+        document.getElementById('project-desc').value = p.description || '';
+        
+        document.getElementById('project-section-title').textContent = 'Edit Project';
+        document.getElementById('cancel-edit-proj-btn').style.display = 'block';
+        document.getElementById('project-cover-label').innerHTML = 'Cover Media <span style="text-transform:none; color:rgba(255,255,255,0.4); font-size:0.7rem; margin-left:8px;">(Leave blank to keep existing)</span>';
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function cancelEditProject() {
+        currentEditProjectId = null;
+        currentEditProjectCover = null;
+        document.getElementById('project-title').value = '';
+        document.getElementById('project-category').value = '';
+        document.getElementById('project-client').value = '';
+        document.getElementById('project-date').value = '';
+        document.getElementById('project-desc').value = '';
+        document.getElementById('project-cover').value = '';
+        
+        document.getElementById('project-section-title').textContent = 'Manage Projects';
+        document.getElementById('cancel-edit-proj-btn').style.display = 'none';
+        document.getElementById('project-cover-label').innerHTML = 'Cover Media (Image or Video)';
+        clearStatus('project-status');
     }
 
     async function saveProject() {
@@ -1287,8 +1392,13 @@
         const fileInput = document.getElementById('project-cover');
         const file = fileInput.files[0];
 
-        if (!title || !category_id || !file) {
-            setStatus('project-status', 'error', 'Title, Category, and Cover File are required.');
+        if (!title || !category_id) {
+            setStatus('project-status', 'error', 'Title and Category are required.');
+            return;
+        }
+
+        if (!currentEditProjectId && !file) {
+            setStatus('project-status', 'error', 'Cover File is required for new projects.');
             return;
         }
 
@@ -1298,42 +1408,53 @@
 
         const pWrap = document.getElementById('proj-progress-wrap');
         const pBar = document.getElementById('proj-progress-bar');
-        pWrap.style.display = 'block';
-        pBar.style.width = '20%';
+        let cover_url = currentEditProjectCover;
 
-        const ext = file.name.split('.').pop();
-        const fileName = `proj_${Date.now()}.${ext}`;
+        if (file) {
+            pWrap.style.display = 'block';
+            pBar.style.width = '20%';
 
-        const { error: uploadErr } = await db.storage.from(BUCKET).upload(fileName, file, { upsert: true });
-        if (uploadErr) {
-            setStatus('project-status', 'error', 'Upload failed: ' + uploadErr.message);
-            btn.disabled = false; pWrap.style.display = 'none'; return;
+            const ext = file.name.split('.').pop();
+            const fileName = `proj_${Date.now()}.${ext}`;
+
+            // Auto-clean old cover image from storage if replacing
+            if (currentEditProjectCover) {
+                const oldFileName = currentEditProjectCover.split('/').pop().split('?')[0];
+                db.storage.from(BUCKET).remove([oldFileName]).catch(() => {});
+            }
+
+            const { error: uploadErr } = await db.storage.from(BUCKET).upload(fileName, file, { upsert: true });
+            if (uploadErr) {
+                setStatus('project-status', 'error', 'Upload failed: ' + uploadErr.message);
+                btn.disabled = false; pWrap.style.display = 'none'; return;
+            }
+            pBar.style.width = '60%';
+
+            const { data: urlData } = db.storage.from(BUCKET).getPublicUrl(fileName);
+            cover_url = urlData.publicUrl;
         }
-        pBar.style.width = '60%';
 
-        const { data: urlData } = db.storage.from(BUCKET).getPublicUrl(fileName);
-        const cover_url = urlData.publicUrl;
-
-        const { data: dbData, error: dbErr } = await db.from('projects').insert({ title, category_id, client_id, cover_url, date_made, description }).select();
+        let dbData, dbErr;
+        if (currentEditProjectId) {
+            const res = await db.from('projects').update({ title, category_id, client_id, cover_url, date_made, description }).eq('id', currentEditProjectId).select();
+            dbData = res.data; dbErr = res.error;
+        } else {
+            const res = await db.from('projects').insert({ title, category_id, client_id, cover_url, date_made, description }).select();
+            dbData = res.data; dbErr = res.error;
+        }
         
-        pBar.style.width = '100%';
-        setTimeout(() => { pWrap.style.display = 'none'; pBar.style.width = '0%'; }, 500);
+        if (file) { pBar.style.width = '100%'; setTimeout(() => { pWrap.style.display = 'none'; pBar.style.width = '0%'; }, 500); }
 
         if (dbErr) {
             setStatus('project-status', 'error', 'DB Error: ' + dbErr.message);
         } else if (!dbData || dbData.length === 0) {
             setStatus('project-status', 'error', 'Blocked by database. Please run the SQL script.');
         } else {
-            setStatus('project-status', 'success', 'Project saved!');
+            setStatus('project-status', 'success', currentEditProjectId ? 'Project updated!' : 'Project saved!');
             showSavedAssurance('global-save-btn');
-            document.getElementById('project-title').value = '';
-            document.getElementById('project-category').value = '';
-            document.getElementById('project-client').value = '';
-            document.getElementById('project-date').value = '';
-            document.getElementById('project-desc').value = '';
-            fileInput.value = '';
-            loadProjects();
-            loadProjectMedia();
+            cancelEditProject(); // Automatically resets fields and state
+            loadProjects(); // Reload the updated directory
+            loadProjectMedia(); // Sync the dropdown in the Gallery tab
         }
         btn.disabled = false;
     }
