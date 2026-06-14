@@ -389,6 +389,7 @@
                 <button class="admin-tab" onclick="switchTab('categories', this)">Categories</button>
                 <button class="admin-tab" onclick="switchTab('clients', this)">Clients</button>
                 <button class="admin-tab" onclick="switchTab('projects', this)">Projects</button>
+                <button class="admin-tab" onclick="switchTab('project-media', this)">Project Gallery</button>
             </div>
 
             <!-- ── POSTERS TAB ─────────────────────────── -->
@@ -584,6 +585,32 @@
                 </div>
             </div>
 
+            <!-- ── PROJECT MEDIA TAB ───────────────────── -->
+            <div class="tab-panel" id="tab-project-media">
+                <div class="admin-section-title">Project Gallery Images</div>
+                <div class="admin-section-desc">Select an existing project and upload additional posters or images. These will appear in a scrolling marquee inside the specific project page.</div>
+                
+                <div style="display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 600px; margin-bottom: 40px;">
+                    <select id="media-project-select" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: var(--black); color: var(--white); width: 100%;">
+                        <option value="">-- Select Project --</option>
+                    </select>
+                    
+                    <div style="border: 1px dashed var(--border); padding: 20px; border-radius: 4px; background: rgba(255,255,255,0.02);">
+                        <label style="display:block; margin-bottom: 8px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; letter-spacing: 1px; text-transform: uppercase; font-size: 0.8rem;">Additional Image</label>
+                        <input type="file" id="media-file" accept="image/*" style="color:var(--white);">
+                    </div>
+                    
+                    <div class="status-msg" id="media-status"></div>
+                </div>
+
+                <div style="margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--border);">
+                    <p class="existing-label">Uploaded Gallery Images</p>
+                    <div id="media-gallery-list" style="margin-top: 16px;">
+                        <div class="empty-state">Loading…</div>
+                    </div>
+                </div>
+            </div>
+
         </div><!-- /admin-body -->
     </div><!-- /admin-shell -->
 
@@ -613,6 +640,7 @@
             if (typeof loadCategories === 'function') loadCategories();
             if (typeof loadProjects === 'function') loadProjects();
             if (typeof loadSiteContent === 'function') loadSiteContent();
+            if (typeof loadProjectMedia === 'function') loadProjectMedia();
 
             // Test connection indicator
             db.from('site_content').select('id').limit(1).then(({ error }) => {
@@ -644,6 +672,7 @@
             if (typeof loadCategories === 'function') loadCategories();
             if (typeof loadProjects === 'function') loadProjects();
             if (typeof loadSiteContent === 'function') loadSiteContent();
+            if (typeof loadProjectMedia === 'function') loadProjectMedia();
         } else {
             const errEl = document.getElementById('auth-error');
             errEl.textContent = error ? error.message : 'Login failed.';
@@ -667,6 +696,7 @@
         else if (name === 'categories') gBtn.textContent = 'Update Category';
         else if (name === 'clients') gBtn.textContent = 'Save Client';
         else if (name === 'projects') gBtn.textContent = 'Save Project';
+        else if (name === 'project-media') gBtn.textContent = 'Add to Gallery';
     }
 
     async function globalSave() {
@@ -678,6 +708,7 @@
         else if (activeTab === 'tab-categories') await saveCategory();
         else if (activeTab === 'tab-clients') await saveClient();
         else if (activeTab === 'tab-projects') await saveProject();
+        else if (activeTab === 'tab-project-media') await uploadProjectMedia();
     }
 
     /* ── STATUS HELPERS ─────────────────────────────────── */
@@ -1305,6 +1336,7 @@
             document.getElementById('project-client').value = '';
             fileInput.value = '';
             loadProjects();
+            loadProjectMedia();
         }
         btn.disabled = false;
     }
@@ -1321,6 +1353,65 @@
             alert('Failed to delete project: ' + error.message);
         }
         else loadProjects();
+    }
+
+    /* ── PROJECT MEDIA CMS ──────────────────────────────── */
+    async function loadProjectMedia() {
+        const { data: projs } = await db.from('projects').select('id, title').order('created_at', { ascending: false });
+        const select = document.getElementById('media-project-select');
+        if (select && projs) {
+            select.innerHTML = '<option value="">-- Select Project --</option>' + projs.map(p => `<option value="${p.id}">${p.title}</option>`).join('');
+        }
+
+        const list = document.getElementById('media-gallery-list');
+        const { data: media } = await db.from('project_media').select('*, projects(title)').order('created_at', { ascending: false });
+        if (!media || !media.length) { list.innerHTML = '<div class="empty-state">No gallery images yet.</div>'; return; }
+
+        list.innerHTML = media.map(m => `
+            <div style="display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border); padding:16px; margin-bottom:12px; border-radius:4px; background:rgba(255,255,255,0.02);">
+                <div style="display:flex; gap:16px; align-items:center;">
+                    <img src="${m.media_url}" style="width:50px;height:50px;object-fit:cover; border-radius:4px;">
+                    <span style="color:var(--yellow); font-family:'Cabinet Grotesk', sans-serif;">${m.projects?.title || 'Unknown Project'}</span>
+                </div>
+                <button class="del-btn" style="position:static;" onclick="deleteProjectMedia('${m.id}', '${m.media_url}')">✕</button>
+            </div>
+        `).join('');
+    }
+
+    async function uploadProjectMedia() {
+        const projectId = document.getElementById('media-project-select').value;
+        const fileInput = document.getElementById('media-file');
+        const file = fileInput.files[0];
+        if (!projectId || !file) { setStatus('media-status', 'error', 'Please select a project and a file.'); return; }
+
+        const btn = document.getElementById('global-save-btn');
+        btn.disabled = true;
+        setStatus('media-status', 'loading', 'Uploading image...');
+
+        const ext = file.name.split('.').pop();
+        const fileName = `gallery_${Date.now()}.${ext}`;
+
+        const { error: uploadErr } = await db.storage.from(BUCKET).upload(fileName, file, { upsert: true });
+        if (uploadErr) { setStatus('media-status', 'error', 'Upload failed: ' + uploadErr.message); btn.disabled=false; return; }
+
+        const { data: urlData } = db.storage.from(BUCKET).getPublicUrl(fileName);
+        const { data, error } = await db.from('project_media').insert({ project_id: projectId, media_url: urlData.publicUrl }).select();
+        
+        if (error || !data || !data.length) { setStatus('media-status', 'error', 'Database Error or Blocked.'); btn.disabled=false; return; }
+
+        setStatus('media-status', 'success', 'Image added to project gallery!');
+        showSavedAssurance('global-save-btn');
+        fileInput.value = '';
+        loadProjectMedia();
+        btn.disabled = false;
+    }
+
+    async function deleteProjectMedia(id, url) {
+        if(!confirm('Delete this image from the project gallery?')) return;
+        const fileName = url.split('/').pop().split('?')[0];
+        await db.storage.from(BUCKET).remove([fileName]);
+        await db.from('project_media').delete().eq('id', id);
+        loadProjectMedia();
     }
     </script>
 </body>

@@ -44,6 +44,11 @@
             <!-- Media gets injected here -->
             <div class="empty-state" style="padding: 100px;">Loading Media...</div>
         </div>
+        
+        <!-- Additional Gallery Marquee -->
+        <div id="project-gallery-container" class="poster-marquee-container" style="display:none; padding-top:60px;">
+            <div class="poster-marquee" id="gallery-track"></div>
+        </div>
     </main>
 
     <footer class="main-footer container">
@@ -90,6 +95,15 @@
             document.getElementById('project-media').innerHTML = isVideo 
                 ? `<video src="${project.cover_url}" autoplay muted loop playsinline style="width:100%; max-height: 85vh; object-fit:cover; display:block;"></video>`
                 : `<img src="${project.cover_url}" style="width:100%; max-height: 85vh; object-fit:cover; display:block;" alt="${project.title}">`;
+
+            // Load Additional Gallery Images
+            const { data: mediaFiles } = await supabase.from('project_media').select('media_url').eq('project_id', id);
+            if (mediaFiles && mediaFiles.length > 0) {
+                const track = document.getElementById('gallery-track');
+                let html = mediaFiles.map(m => `<img src="${m.media_url}" alt="${project.title} Gallery" class="poster-item">`).join('');
+                track.innerHTML = html + html; // duplicate for infinite loop
+                document.getElementById('project-gallery-container').style.display = 'block';
+            }
         }
         loadProject();
     </script>
