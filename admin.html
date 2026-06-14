@@ -437,7 +437,7 @@
                     <div class="form-group">
                         <input type="url" id="yt-link" placeholder="https://www.youtube.com/watch?v=...">
                     </div>
-                    <button class="btn" onclick="addVideo()">Add Video</button>
+                    <button id="btn-add-video" class="btn" onclick="addVideo()">Save Changes</button>
                 </div>
 
                 <div class="status-msg" id="video-status" style="margin-top: 16px;"></div>
@@ -503,7 +503,7 @@
                         <label style="display:block; margin-bottom: 8px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; font-size: 0.8rem; text-transform: uppercase;">Contact Page Intro Text</label>
                         <textarea id="edit-contact-body" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%; min-height: 120px; resize: vertical;"></textarea>
                     </div>
-                    <button class="btn" onclick="saveSiteContent()" style="margin-top:0; width:max-content;">Save Site Text</button>
+                    <button id="btn-site-content" class="btn" onclick="saveSiteContent()" style="margin-top:0; width:max-content;">Save Changes</button>
                     <div class="status-msg" id="site-content-status"></div>
                 </div>
             </div>
@@ -521,7 +521,7 @@
                     
                     <textarea id="edit-category-desc" placeholder="Category description..." style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%; min-height: 100px; resize: vertical;"></textarea>
                     
-                    <button class="btn" onclick="saveCategory()" style="margin-top:0; width:max-content;">Update Category</button>
+                    <button id="btn-category" class="btn" onclick="saveCategory()" style="margin-top:0; width:max-content;">Save Changes</button>
                     <div class="status-msg" id="category-status"></div>
                 </div>
             </div>
@@ -546,7 +546,7 @@
                         <input type="file" id="client-banner" accept="image/*" style="color:var(--white);">
                     </div>
                     
-                    <button class="btn" onclick="saveClient()" style="margin-top:0; width:max-content;">Save Client</button>
+                    <button id="btn-client" class="btn" onclick="saveClient()" style="margin-top:0; width:max-content;">Save Changes</button>
                     <div class="status-msg" id="client-status"></div>
                 </div>
 
@@ -580,7 +580,7 @@
                         <input type="file" id="project-cover" accept="image/*,video/mp4,video/webm" style="color:var(--white);">
                     </div>
                     
-                    <button class="btn" onclick="saveProject()" style="margin-top:0; width:max-content;" id="save-proj-btn">Save Project</button>
+                    <button class="btn" onclick="saveProject()" style="margin-top:0; width:max-content;" id="save-proj-btn">Save Changes</button>
                     <div class="status-msg" id="project-status"></div>
                     <div class="progress-wrap" id="proj-progress-wrap" style="display:none; margin-top: 10px;"><div class="progress-bar" id="proj-progress-bar"></div></div>
                 </div>
@@ -667,6 +667,23 @@
         const el = document.getElementById(id);
         el.className = 'status-msg';
         el.textContent = '';
+    }
+    
+    function showSavedAssurance(btnId) {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
+        const origText = btn.dataset.origText || btn.textContent;
+        btn.dataset.origText = origText;
+        btn.textContent = 'Saved ✔';
+        btn.style.backgroundColor = 'var(--green)';
+        btn.style.color = 'var(--yellow)';
+        btn.style.borderColor = 'var(--yellow)';
+        setTimeout(() => {
+            btn.textContent = origText;
+            btn.style.backgroundColor = '';
+            btn.style.color = '';
+            btn.style.borderColor = '';
+        }, 2500);
     }
 
     /* ── IMAGE COMPRESSION ──────────────────────────────── */
@@ -785,6 +802,7 @@
         }
 
         setStatus('poster-status', 'success', 'Poster added to marquee!');
+        showSavedAssurance('poster-upload-btn');
         uploadBtn.disabled = false;
         compressedBlob = null;
         posterPreview.style.display = 'none';
@@ -864,6 +882,7 @@
         }
 
         setStatus('video-status', 'success', 'Video added to the grid!');
+        showSavedAssurance('btn-add-video');
         input.value = '';
         loadVideos();
     }
@@ -988,6 +1007,7 @@
 
         setStatus('hero-status', 'success', 'Hero video uploaded! Copy the URL below into index.html.');
         document.getElementById('hero-url-display').textContent = urlData.publicUrl;
+        showSavedAssurance('hero-upload-btn');
         heroUploadBtn.disabled = false;
     }
 
@@ -1096,6 +1116,7 @@
         if (error) { setStatus('client-status', 'error', 'Error: ' + error.message); return; }
 
         setStatus('client-status', 'success', 'Client saved successfully!');
+        showSavedAssurance('btn-client');
         document.getElementById('client-name').value = '';
         document.getElementById('client-desc').value = '';
         document.getElementById('client-banner').value = '';
@@ -1143,7 +1164,7 @@
         setStatus('category-status', 'loading', 'Updating...');
         const { error } = await db.from('categories').update({ description: desc }).eq('id', id);
         if (error) setStatus('category-status', 'error', 'Error: ' + error.message);
-        else { setStatus('category-status', 'success', 'Category updated!'); loadCategories(); }
+        else { setStatus('category-status', 'success', 'Category updated!'); showSavedAssurance('btn-category'); loadCategories(); }
     }
 
     /* ── SITE CONTENT CMS ───────────────────────────────── */
@@ -1169,7 +1190,7 @@
         ];
         const { error } = await db.from('site_content').upsert(updates);
         if (error) setStatus('site-content-status', 'error', 'Failed to save: ' + error.message);
-        else setStatus('site-content-status', 'success', 'Site text updated successfully!');
+        else { setStatus('site-content-status', 'success', 'Site text updated successfully!'); showSavedAssurance('btn-site-content'); }
     }
 
     async function loadProjects() {
@@ -1239,6 +1260,7 @@
             setStatus('project-status', 'error', 'DB Error: ' + dbErr.message);
         } else {
             setStatus('project-status', 'success', 'Project saved!');
+            showSavedAssurance('save-proj-btn');
             document.getElementById('project-title').value = '';
             document.getElementById('project-category').value = '';
             document.getElementById('project-client').value = '';
