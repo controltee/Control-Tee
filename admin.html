@@ -787,7 +787,7 @@
 
         const { data: urlData } = db.storage.from(BUCKET).getPublicUrl(fileName);
 
-        const { error: dbErr } = await db.from('posters').insert({ image_url: urlData.publicUrl });
+        const { data: dbData, error: dbErr } = await db.from('posters').insert({ image_url: urlData.publicUrl }).select();
 
         progressBar.style.width = '100%';
         setTimeout(() => {
@@ -797,6 +797,10 @@
 
         if (dbErr) {
             setStatus('poster-status', 'error', 'Database error: ' + dbErr.message);
+            uploadBtn.disabled = false;
+            return;
+        } else if (!dbData || dbData.length === 0) {
+            setStatus('poster-status', 'error', 'Blocked by database. Please run the SQL script.');
             uploadBtn.disabled = false;
             return;
         }
@@ -874,10 +878,13 @@
 
         setStatus('video-status', 'loading', 'Adding video…');
 
-        const { error } = await db.from('videos').insert({ youtube_url: url });
+        const { data, error } = await db.from('videos').insert({ youtube_url: url }).select();
 
         if (error) {
             setStatus('video-status', 'error', 'Failed to add video: ' + error.message);
+            return;
+        } else if (!data || data.length === 0) {
+            setStatus('video-status', 'error', 'Blocked by database. Please run the SQL script.');
             return;
         }
 
@@ -1112,8 +1119,9 @@
             banner_url = urlData.publicUrl;
         }
         
-        const { error } = await db.from('clients').insert({ name, description, parent_id, banner_url });
+        const { data, error } = await db.from('clients').insert({ name, description, parent_id, banner_url }).select();
         if (error) { setStatus('client-status', 'error', 'Error: ' + error.message); return; }
+        else if (!data || data.length === 0) { setStatus('client-status', 'error', 'Blocked by database. Please run the SQL script.'); return; }
 
         setStatus('client-status', 'success', 'Client saved successfully!');
         showSavedAssurance('btn-client');
@@ -1162,9 +1170,15 @@
         if (!id) { setStatus('category-status', 'error', 'Please select a category.'); return; }
         
         setStatus('category-status', 'loading', 'Updating...');
-        const { error } = await db.from('categories').update({ description: desc }).eq('id', id);
+        const { data, error } = await db.from('categories').update({ description: desc }).eq('id', id).select();
         if (error) setStatus('category-status', 'error', 'Error: ' + error.message);
-        else { setStatus('category-status', 'success', 'Category updated!'); showSavedAssurance('btn-category'); loadCategories(); }
+        else if (!data || data.length === 0) setStatus('category-status', 'error', 'Blocked by database. Please run the SQL script.');
+        else { 
+            setStatus('category-status', 'success', 'Category updated!'); 
+            showSavedAssurance('btn-category'); 
+            await loadCategories(); 
+            document.getElementById('edit-category-select').value = id;
+        }
     }
 
     /* ── SITE CONTENT CMS ───────────────────────────────── */
@@ -1188,9 +1202,10 @@
             { id: 'about_body', content: document.getElementById('edit-about-body').value },
             { id: 'contact_body', content: document.getElementById('edit-contact-body').value }
         ];
-        const { error } = await db.from('site_content').upsert(updates);
+        const { data, error } = await db.from('site_content').upsert(updates).select();
         if (error) setStatus('site-content-status', 'error', 'Failed to save: ' + error.message);
-        else { setStatus('site-content-status', 'success', 'Site text updated successfully!'); showSavedAssurance('btn-site-content'); }
+        else if (!data || data.length === 0) setStatus('site-content-status', 'error', 'Blocked by database. Please run the SQL script.');
+        else { setStatus('site-content-status', 'success', 'Site text updated successfully!'); showSavedAssurance('btn-site-content'); loadSiteContent(); }
     }
 
     async function loadProjects() {
@@ -1251,13 +1266,15 @@
         const { data: urlData } = db.storage.from(BUCKET).getPublicUrl(fileName);
         const cover_url = urlData.publicUrl;
 
-        const { error: dbErr } = await db.from('projects').insert({ title, category_id, client_id, cover_url });
+        const { data: dbData, error: dbErr } = await db.from('projects').insert({ title, category_id, client_id, cover_url }).select();
         
         pBar.style.width = '100%';
         setTimeout(() => { pWrap.style.display = 'none'; pBar.style.width = '0%'; }, 500);
 
         if (dbErr) {
             setStatus('project-status', 'error', 'DB Error: ' + dbErr.message);
+        } else if (!dbData || dbData.length === 0) {
+            setStatus('project-status', 'error', 'Blocked by database. Please run the SQL script.');
         } else {
             setStatus('project-status', 'success', 'Project saved!');
             showSavedAssurance('save-proj-btn');
