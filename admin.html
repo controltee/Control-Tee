@@ -611,8 +611,8 @@
                     </select>
                     
                     <div style="border: 1px dashed var(--border); padding: 20px; border-radius: 4px; background: rgba(255,255,255,0.02);">
-                        <label style="display:block; margin-bottom: 8px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; letter-spacing: 1px; text-transform: uppercase; font-size: 0.8rem;">Additional Image</label>
-                        <input type="file" id="media-file" accept="image/*" style="color:var(--white);">
+                        <label style="display:block; margin-bottom: 8px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; letter-spacing: 1px; text-transform: uppercase; font-size: 0.8rem;">Additional Images</label>
+                        <input type="file" id="media-file" accept="image/*" multiple style="color:var(--white);">
                     </div>
                     
                     <div class="status-msg" id="media-status"></div>
@@ -1499,27 +1499,44 @@
     async function uploadProjectMedia() {
         const projectId = document.getElementById('media-project-select').value;
         const fileInput = document.getElementById('media-file');
-        const file = fileInput.files[0];
-        if (!projectId || !file) { setStatus('media-status', 'error', 'Please select a project and a file.'); return; }
+        const files = fileInput.files;
+        if (!projectId || !files.length) { setStatus('media-status', 'error', 'Please select a project and at least one file.'); return; }
 
         const btn = document.getElementById('global-save-btn');
         btn.disabled = true;
-        setStatus('media-status', 'loading', 'Uploading image...');
+        setStatus('media-status', 'loading', `Uploading ${files.length} image(s)...`);
 
-        const ext = file.name.split('.').pop();
-        const fileName = `gallery_${Date.now()}.${ext}`;
+        let successCount = 0;
+        let errorMsg = '';
 
-        const { error: uploadErr } = await db.storage.from(BUCKET).upload(fileName, file, { upsert: true });
-        if (uploadErr) { setStatus('media-status', 'error', 'Upload failed: ' + uploadErr.message); btn.disabled=false; return; }
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const ext = file.name.split('.').pop();
+            const fileName = `gallery_${Date.now()}_${i}.${ext}`;
 
-        const { data: urlData } = db.storage.from(BUCKET).getPublicUrl(fileName);
-        const { data, error } = await db.from('project_media').insert({ project_id: projectId, media_url: urlData.publicUrl }).select();
+            const { error: uploadErr } = await db.storage.from(BUCKET).upload(fileName, file, { upsert: true });
+            if (uploadErr) { errorMsg = uploadErr.message; continue; }
+
+            const { data: urlData } = db.storage.from(BUCKET).getPublicUrl(fileName);
+            const { data, error } = await db.from('project_media').insert({ project_id: projectId, media_url: urlData.publicUrl }).select();
+            
+            if (!error && data && data.length) {
+                successCount++;
+            } else {
+                errorMsg = error ? error.message : 'Database Error';
+            }
+        }
+
+        if (successCount === 0) {
+            setStatus('media-status', 'error', 'Upload failed: ' + errorMsg);
+        } else if (successCount < files.length) {
+            setStatus('media-status', 'error', `Partially uploaded ${successCount}/${files.length}. Error: ${errorMsg}`);
+        } else {
+            setStatus('media-status', 'success', `${successCount} image(s) added to project gallery!`);
+            showSavedAssurance('global-save-btn');
+            fileInput.value = '';
+        }
         
-        if (error || !data || !data.length) { setStatus('media-status', 'error', 'Database Error or Blocked.'); btn.disabled=false; return; }
-
-        setStatus('media-status', 'success', 'Image added to project gallery!');
-        showSavedAssurance('global-save-btn');
-        fileInput.value = '';
         loadProjectMedia();
         btn.disabled = false;
     }
