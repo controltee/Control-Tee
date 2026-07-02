@@ -9,7 +9,6 @@
 </head>
 <body class="page-transition">
 
-
     <nav class="sticky-back-nav">
         <a href="index.html" class="btn">← Back</a>
     </nav>
@@ -57,7 +56,11 @@
             </div>
 
             <!-- Right: form -->
-            <form class="contact-form" action="#" method="POST">
+            <form class="contact-form" action="https://api.web3forms.com/submit" method="POST">
+                
+                <input type="hidden" name="access_key" value="11d96307-207d-4c24-9378-dea299083f92">
+                <input type="hidden" name="redirect" value="https://web3forms.com/success">
+
                 <div class="form-group">
                     <label class="form-label" for="name">Name</label>
                     <input class="form-input" type="text" id="name" name="name" placeholder="Your name" required>
@@ -88,7 +91,6 @@
         </div>
 
         <div class="calendar-embed-wrapper reveal" data-delay="100">
-
             <iframe
                 src="https://calendar.app.google/hgFF4fATMxLkXWsP9"
                 width="100%"
@@ -98,18 +100,10 @@
                 title="Book a meeting with Control Tee"
                 style="display:block; border:none; border-radius:4px; filter: invert(0.92) hue-rotate(180deg) brightness(0.9) contrast(1.05);">
             </iframe>
-
             <div class="calendar-booking-cta" style="padding-top:0; padding-bottom:32px;">
                 <p>Having trouble loading? Open the calendar directly.</p>
-                <a
-                    href="https://calendar.app.google/hgFF4fATMxLkXWsP9"
-                    target="_blank"
-                    rel="noopener"
-                    class="btn">
-                    Open Booking Calendar →
-                </a>
+                <a href="https://calendar.app.google/hgFF4fATMxLkXWsP9" target="_blank" rel="noopener" class="btn">Open Booking Calendar →</a>
             </div>
-
         </div>
     </section>
 
@@ -123,10 +117,9 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="db.js"></script>
     <script>
-        const SUPABASE_URL = 'https://ccaggjhyeygyosbdnxmq.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjYWdnamh5ZXlneW9zYmRueG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNjMzNzksImV4cCI6MjA5NjgzOTM3OX0.Z2NJXnSNoJtugQ0Co-R_SMH3dXbErVcCcItgxj_PQxs';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabase = window.db;
 
         async function loadDynamicContent() {
             const { data: textData } = await supabase.from('site_content').select('*');

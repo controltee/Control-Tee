@@ -36,14 +36,13 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="db.js"></script>
     <script>
-        const SUPABASE_URL = 'https://ccaggjhyeygyosbdnxmq.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjYWdnamh5ZXlneW9zYmRueG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNjMzNzksImV4cCI6MjA5NjgzOTM3OX0.Z2NJXnSNoJtugQ0Co-R_SMH3dXbErVcCcItgxj_PQxs';
+        const supabase = window.db;
 
         async function loadCategory() {
             try {
-                if (!window.supabase) throw new Error("Supabase failed to load. Please check your internet connection.");
-                const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                if (!supabase) throw new Error("Database file failed to initialize properly.");
                 
                 const params = new URLSearchParams(window.location.search);
                 const slug = params.get('id');
