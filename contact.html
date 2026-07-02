@@ -53,33 +53,46 @@
                 </div>
             </div>
 
-            <form class="contact-form" id="custom-contact-form" action="https://api.web3forms.com/submit" method="POST">
-                
-                <input type="hidden" name="access_key" value="11d96307-207d-4c24-9378-dea299083f92">
-                
-                <input type="checkbox" name="botcheck" class="hidden" style="display: none;">
+            <div id="form-container">
+                <form class="contact-form" id="custom-contact-form" action="https://api.web3forms.com/submit" method="POST">
+                    
+                    <input type="hidden" name="access_key" value="11d96307-207d-4c24-9378-dea299083f92">
+                    
+                    <input type="checkbox" name="botcheck" class="hidden" style="display: none;">
 
-                <div class="form-group">
-                    <label class="form-label" for="name">Name</label>
-                    <input class="form-input" type="text" id="name" name="name" placeholder="Your name" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="email">Email</label>
-                    <input class="form-input" type="email" id="email" name="email" placeholder="your@email.com" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="project">Project type</label>
-                    <input class="form-input" type="text" id="project" name="project" placeholder="Brand Identity, Motion, Campaign…">
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="message">Message</label>
-                    <textarea class="form-textarea" id="message" name="message" placeholder="Tell us about your project…" required></textarea>
-                </div>
-                
-                <div class="h-captcha" data-captcha="true" style="margin-top: 10px;"></div>
+                    <div class="form-group">
+                        <label class="form-label" for="name">Name</label>
+                        <input class="form-input" type="text" id="name" name="name" placeholder="Your name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email</label>
+                        <input class="form-input" type="email" id="email" name="email" placeholder="your@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="project">Project type</label>
+                        <input class="form-input" type="text" id="project" name="project" placeholder="Brand Identity, Motion, Campaign…">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="message">Message</label>
+                        <textarea class="form-textarea" id="message" name="message" placeholder="Tell us about your project…" required></textarea>
+                    </div>
+                    
+                    <div class="h-captcha" data-captcha="true" style="margin-top: 10px;"></div>
 
-                <button type="submit" id="submit-btn" class="btn form-submit" style="margin-top: 20px;">Send It</button>
-            </form>
+                    <button type="submit" id="submit-btn" class="btn form-submit" style="margin-top: 20px;">Send It</button>
+                    
+                    <p id="form-error-msg" style="color: #ff6b6b; font-size: 0.85rem; margin-top: 12px; display: none;"></p>
+                </form>
+
+                <div id="success-message" style="display: none; text-align: left; padding: 40px; border: 1px dashed var(--border); border-radius: 4px; background: rgba(247,213,79,0.03);">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 24px;">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <h3 style="font-family: 'Cabinet Grotesk', sans-serif; font-size: 2rem; color: var(--yellow); margin-bottom: 12px; text-transform: uppercase; letter-spacing: -1px;">Message Sent</h3>
+                    <p style="font-family: 'DM Sans', sans-serif; color: rgba(255,255,255,0.6); line-height: 1.8;">Thank you for reaching out to Control Tee. We've received your project details and will get back to you shortly.</p>
+                </div>
+            </div>
 
         </div>
     </section>
@@ -137,43 +150,46 @@
 
         // ── AJAX FORM SUBMISSION HANDLER ──
         const contactForm = document.getElementById('custom-contact-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const errorMsg = document.getElementById('form-error-msg');
+        const successUi = document.getElementById('success-message');
         
         contactForm.addEventListener('submit', function(e) {
-            e.preventDefault(); // Stop the default page redirect
+            e.preventDefault(); 
             
-            const submitBtn = document.getElementById('submit-btn');
+            // Clear previous errors
+            errorMsg.style.display = 'none';
             const originalBtnText = submitBtn.textContent;
-            const formData = new FormData(contactForm);
             
-            // Visual feedback while processing
+            // Update button state
             submitBtn.textContent = 'Sending...';
             submitBtn.disabled = true;
 
+            const formData = new FormData(contactForm);
+
             fetch('https://api.web3forms.com/submit', {
                 method: 'POST',
+                headers: {
+                    // This exact header is required to stop Web3Forms from redirecting the page
+                    'Accept': 'application/json' 
+                },
                 body: formData
             })
             .then(async (response) => {
                 let json = await response.json();
                 
                 if (response.status === 200) {
-                    // Success: Swap the form out for a branded success message
-                    contactForm.innerHTML = `
-                        <div style="text-align:center; padding: 60px 0; border: 1px dashed var(--border); border-radius: 4px; background: rgba(247,213,79,0.02);">
-                            <svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 20px;">
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                            </svg>
-                            <h3 style="font-family: 'Cabinet Grotesk', sans-serif; font-size: 1.8rem; color: var(--yellow); margin-bottom: 12px; text-transform: uppercase;">Message Sent</h3>
-                            <p style="font-family: 'DM Sans', sans-serif; color: rgba(255,255,255,0.6); max-width: 300px; margin: 0 auto;">Thank you for reaching out. We will review your project details and get back to you shortly.</p>
-                        </div>
-                    `;
+                    // SUCCESS: Hide form and show custom UI
+                    contactForm.style.display = 'none';
+                    successUi.style.display = 'block';
                 } else {
-                    // Form validation or captcha error
-                    alert('Submission failed: ' + json.message);
+                    // ERROR: Web3Forms rejected it (e.g. missing captcha)
+                    errorMsg.textContent = 'Submission failed: ' + json.message;
+                    errorMsg.style.display = 'block';
                     submitBtn.textContent = originalBtnText;
                     submitBtn.disabled = false;
-                    // Reset the captcha so the user can try again
+                    
+                    // Reset captcha if it failed so user can try again
                     if (typeof hcaptcha !== 'undefined') {
                         hcaptcha.reset();
                     }
@@ -181,7 +197,8 @@
             })
             .catch(error => {
                 console.error(error);
-                alert('A network error occurred. Please try again.');
+                errorMsg.textContent = 'A network error occurred. Please try again.';
+                errorMsg.style.display = 'block';
                 submitBtn.textContent = originalBtnText;
                 submitBtn.disabled = false;
             });
