@@ -13,11 +13,9 @@
         <a href="index.html" class="btn">← Back</a>
     </nav>
 
-    <!-- ── CONTACT FORM & INFO ── -->
     <section class="contact-section">
         <div class="contact-grid container">
 
-            <!-- Left: info -->
             <div>
                 <h1 class="contact-headline" data-scramble>Let's Work.</h1>
                 <p class="contact-body" id="contact-body">
@@ -55,13 +53,10 @@
                 </div>
             </div>
 
-            <!-- Right: form -->
-            <form class="contact-form" action="https://api.web3forms.com/submit" method="POST">
+            <form class="contact-form" id="custom-contact-form" action="https://api.web3forms.com/submit" method="POST">
                 
                 <input type="hidden" name="access_key" value="11d96307-207d-4c24-9378-dea299083f92">
-                <input type="hidden" name="redirect" value="https://web3forms.com/success">
                 
-                <!-- Invisible honeypot -->
                 <input type="checkbox" name="botcheck" class="hidden" style="display: none;">
 
                 <div class="form-group">
@@ -81,16 +76,14 @@
                     <textarea class="form-textarea" id="message" name="message" placeholder="Tell us about your project…" required></textarea>
                 </div>
                 
-                <!-- hCaptcha Widget -->
                 <div class="h-captcha" data-captcha="true" style="margin-top: 10px;"></div>
 
-                <button type="submit" class="btn form-submit" style="margin-top: 20px;">Send It</button>
+                <button type="submit" id="submit-btn" class="btn form-submit" style="margin-top: 20px;">Send It</button>
             </form>
 
         </div>
     </section>
 
-    <!-- ── BOOK A MEETING ── -->
     <section class="calendar-section container">
         <div class="calendar-header reveal">
             <h2>Book a Meeting</h2>
@@ -126,6 +119,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="db.js"></script>
     <script src="https://web3forms.com/client/script.js" async defer></script>
+    
     <script>
         const supabase = window.db;
 
@@ -140,6 +134,58 @@
             }
         }
         loadDynamicContent();
+
+        // ── AJAX FORM SUBMISSION HANDLER ──
+        const contactForm = document.getElementById('custom-contact-form');
+        
+        contactForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Stop the default page redirect
+            
+            const submitBtn = document.getElementById('submit-btn');
+            const originalBtnText = submitBtn.textContent;
+            const formData = new FormData(contactForm);
+            
+            // Visual feedback while processing
+            submitBtn.textContent = 'Sending...';
+            submitBtn.disabled = true;
+
+            fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                body: formData
+            })
+            .then(async (response) => {
+                let json = await response.json();
+                
+                if (response.status === 200) {
+                    // Success: Swap the form out for a branded success message
+                    contactForm.innerHTML = `
+                        <div style="text-align:center; padding: 60px 0; border: 1px dashed var(--border); border-radius: 4px; background: rgba(247,213,79,0.02);">
+                            <svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 20px;">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                            <h3 style="font-family: 'Cabinet Grotesk', sans-serif; font-size: 1.8rem; color: var(--yellow); margin-bottom: 12px; text-transform: uppercase;">Message Sent</h3>
+                            <p style="font-family: 'DM Sans', sans-serif; color: rgba(255,255,255,0.6); max-width: 300px; margin: 0 auto;">Thank you for reaching out. We will review your project details and get back to you shortly.</p>
+                        </div>
+                    `;
+                } else {
+                    // Form validation or captcha error
+                    alert('Submission failed: ' + json.message);
+                    submitBtn.textContent = originalBtnText;
+                    submitBtn.disabled = false;
+                    // Reset the captcha so the user can try again
+                    if (typeof hcaptcha !== 'undefined') {
+                        hcaptcha.reset();
+                    }
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                alert('A network error occurred. Please try again.');
+                submitBtn.textContent = originalBtnText;
+                submitBtn.disabled = false;
+            });
+        });
     </script>
     <script src="animations.js"></script>
 </body>
