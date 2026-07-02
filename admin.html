@@ -340,7 +340,6 @@
 </head>
 <body>
 
-    <!-- ── AUTH OVERLAY ─────────────────────────────────── -->
     <div id="auth-overlay">
         <h2 id="auth-heading" style="
             font-family: 'Cabinet Grotesk', sans-serif;
@@ -370,7 +369,6 @@
         <p id="auth-error" style="display:none; color:#ff6b6b; font-size:0.8rem; margin-top:10px;">Incorrect password. Try again.</p>
     </div>
 
-    <!-- ── ADMIN SHELL (revealed after auth) ────────────── -->
     <div class="admin-shell" id="admin-shell">
 
         <header class="admin-header">
@@ -380,9 +378,9 @@
             </div>
             <div class="admin-header-right">
                 <button id="global-save-btn" class="btn" style="margin-top:0; opacity:1; transform:none; padding:10px 24px; font-size:0.75rem;" onclick="globalSave()">Save Changes</button>
-                <a href="index.html" class="btn" style="margin-top:0; opacity:1; transform:none; padding:10px 24px; font-size:0.75rem; background:transparent; border-color:var(--border); color:var(--white);">
+                <button class="btn" style="margin-top:0; opacity:1; transform:none; padding:10px 24px; font-size:0.75rem; background:transparent; border-color:var(--border); color:var(--white);" onclick="logOut()">
                     Exit
-                </a>
+                </button>
             </div>
         </header>
 
@@ -399,7 +397,6 @@
                 <button class="admin-tab" onclick="switchTab('project-media', this)">Project Gallery</button>
             </div>
 
-            <!-- ── POSTERS TAB ─────────────────────────── -->
             <div class="tab-panel active" id="tab-posters">
 
                 <div class="admin-section-title">Homepage Poster Marquee</div>
@@ -425,7 +422,6 @@
                     <div class="progress-bar" id="poster-progress-bar"></div>
                 </div>
 
-                <!-- Existing Posters -->
                 <div style="margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--border);">
                     <p class="existing-label">Existing Posters</p>
                     <div class="poster-thumb-grid" id="poster-thumb-grid">
@@ -434,7 +430,6 @@
                 </div>
             </div>
 
-            <!-- ── VIDEOS TAB ──────────────────────────── -->
             <div class="tab-panel" id="tab-videos">
 
                 <div class="admin-section-title">Add Video</div>
@@ -456,7 +451,6 @@
                 </div>
             </div>
 
-            <!-- ── HERO VIDEO TAB ──────────────────────── -->
             <div class="tab-panel" id="tab-video-hero">
 
                 <div class="admin-section-title">Hero Video</div>
@@ -484,7 +478,6 @@
                 </div>
             </div>
 
-            <!-- ── SITE CONTENT TAB ────────────────────── -->
             <div class="tab-panel" id="tab-site-content">
                 <div class="admin-section-title">Edit Site Text</div>
                 <div class="admin-section-desc">Customize the main paragraphs and subtitles across your website. You can use basic HTML like &lt;br&gt; for line breaks or &lt;em&gt; for italics.</div>
@@ -510,7 +503,6 @@
                 </div>
             </div>
 
-            <!-- ── CATEGORIES TAB ──────────────────────── -->
             <div class="tab-panel" id="tab-categories">
                 <div class="admin-section-title">Edit Categories</div>
                 <div class="admin-section-desc">Customize the descriptive text that appears on each category's public page.</div>
@@ -518,8 +510,7 @@
                 <div style="display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 600px; margin-bottom: 40px;">
                     <select id="edit-category-select" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: var(--black); color: var(--white); width: 100%;" onchange="loadCategoryDetails()">
                         <option value="">-- Select Category to Edit --</option>
-                        <!-- Populated via JS -->
-                    </select>
+                        </select>
                     
                     <textarea id="edit-category-desc" placeholder="Category description..." style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%; min-height: 100px; resize: vertical;"></textarea>
                     
@@ -527,7 +518,6 @@
                 </div>
             </div>
 
-            <!-- ── CLIENTS TAB (CMS Blueprint) ─────────── -->
             <div class="tab-panel" id="tab-clients">
                 <div class="admin-section-title">Manage Clients</div>
                 <div class="admin-section-desc">Create top-level clients (e.g., Global Brand) or nested subclients (e.g., Regional Branch). Add descriptions and banners here.</div>
@@ -538,8 +528,7 @@
                     
                     <select id="client-parent" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: var(--black); color: var(--white); width: 100%;">
                         <option value="">-- Top Level Client (No Parent) --</option>
-                        <!-- Populated via JS -->
-                    </select>
+                        </select>
                     
                     <div style="border: 1px dashed var(--border); padding: 20px; border-radius: 4px; background: rgba(255,255,255,0.02);">
                         <label style="display:block; margin-bottom: 8px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; letter-spacing: 1px; text-transform: uppercase; font-size: 0.8rem;">Client Banner (Optional)</label>
@@ -558,7 +547,6 @@
                 </div>
             </div>
 
-            <!-- ── PROJECTS TAB (CMS Blueprint) ────────── -->
             <div class="tab-panel" id="tab-projects">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 20px;">
                     <div>
@@ -600,7 +588,6 @@
                 </div>
             </div>
 
-            <!-- ── PROJECT MEDIA TAB ───────────────────── -->
             <div class="tab-panel" id="tab-project-media">
                 <div class="admin-section-title">Project Gallery Images</div>
                 <div class="admin-section-desc">Select an existing project and upload additional posters or images. These will appear in a scrolling marquee inside the specific project page.</div>
@@ -626,17 +613,11 @@
                 </div>
             </div>
 
-        </div><!-- /admin-body -->
-    </div><!-- /admin-shell -->
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        </div></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="db.js"></script>
     <script>
     /* ── CONFIG ─────────────────────────────────────────── */
-    // TODO: Replace with environment variables during your fresh setup
-    const SUPABASE_URL      = 'https://ccaggjhyeygyosbdnxmq.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjYWdnamh5ZXlneW9zYmRueG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNjMzNzksImV4cCI6MjA5NjgzOTM3OX0.Z2NJXnSNoJtugQ0Co-R_SMH3dXbErVcCcItgxj_PQxs';
-    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+    const db = window.db;
     const BUCKET           = 'portfolio_assets';
     const MAX_COMPRESS_PX  = 1800;
     const COMPRESS_QUALITY = 0.82;
@@ -694,6 +675,11 @@
             errEl.style.display = 'block';
             document.getElementById('admin-pass').focus();
         }
+    }
+
+    async function logOut() {
+        await db.auth.signOut();
+        window.location.href = 'index.html';
     }
 
     /* ── TABS ───────────────────────────────────────────── */
