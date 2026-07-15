@@ -338,32 +338,59 @@
 <body>
 
     <div id="auth-overlay">
-        <h2 id="auth-heading" style="
-            font-family: 'Cabinet Grotesk', sans-serif;
-            color: var(--yellow);
-            font-size: 2rem;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: -1px; margin-bottom: 20px;
-        ">Admin Access</h2>
+        <div id="login-step" style="display:flex; flex-direction:column; align-items:center; gap:15px;">
+            <h2 id="auth-heading" style="
+                font-family: 'Cabinet Grotesk', sans-serif;
+                color: var(--yellow);
+                font-size: 2rem;
+                font-weight: 900;
+                text-transform: uppercase;
+                letter-spacing: -1px; margin-bottom: 5px;
+            ">Admin Access</h2>
 
-        <input
-            type="email"
-            id="admin-email"
-            placeholder="Admin Email"
-            autocomplete="username"
-            style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--white); min-width: 260px; margin-bottom: 8px;"
-        >
-        <input
-            type="password"
-            id="admin-pass"
-            placeholder="Enter password"
-            autocomplete="current-password"
-            onkeydown="if(event.key==='Enter') checkAuth()"
-            style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--white); min-width: 260px;"
-        >
-        <button id="unlock-btn" class="btn" style="margin-top: 10px; min-width: 260px;" onclick="checkAuth()">Unlock</button>
-        <p id="auth-error" style="display:none; color:#ff6b6b; font-size:0.8rem; margin-top:10px;">Incorrect password. Try again.</p>
+            <input
+                type="email"
+                id="admin-email"
+                placeholder="Admin Email"
+                autocomplete="username"
+                style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--white); min-width: 260px; margin-bottom: 8px;"
+            >
+            <input
+                type="password"
+                id="admin-pass"
+                placeholder="Enter password"
+                autocomplete="current-password"
+                onkeydown="if(event.key==='Enter') checkAuth()"
+                style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--white); min-width: 260px;"
+            >
+            <button id="unlock-btn" class="btn" style="margin-top: 10px; min-width: 260px;" onclick="checkAuth()">Unlock</button>
+            <p id="auth-error" style="display:none; color:#ff6b6b; font-size:0.8rem; margin-top:10px;">Incorrect password. Try again.</p>
+        </div>
+
+        <div id="mfa-step" style="display:none; flex-direction:column; align-items:center; gap:15px;">
+            <h2 style="
+                font-family: 'Cabinet Grotesk', sans-serif;
+                color: var(--yellow);
+                font-size: 1.6rem;
+                font-weight: 900;
+                text-transform: uppercase;
+                letter-spacing: -1px; margin-bottom: 5px;
+            ">Verification Code</h2>
+            <p style="font-family:'DM Sans',sans-serif; font-size:0.85rem; color:rgba(255,255,255,0.5); max-width:280px; text-align:center; margin-bottom: 5px;">Enter the 6-digit code from your authenticator app.</p>
+            <input
+                type="text"
+                id="mfa-code"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                maxlength="6"
+                placeholder="123456"
+                autocomplete="one-time-code"
+                onkeydown="if(event.key==='Enter') verifyMfaLogin()"
+                style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--white); min-width: 260px; text-align:center; letter-spacing: 4px; font-size: 1.1rem;"
+            >
+            <button id="mfa-verify-btn" class="btn" style="margin-top: 10px; min-width: 260px;" onclick="verifyMfaLogin()">Verify</button>
+            <p id="mfa-error" style="display:none; color:#ff6b6b; font-size:0.8rem; margin-top:10px;">Incorrect code. Try again.</p>
+        </div>
     </div>
 
     <div class="admin-shell" id="admin-shell">
@@ -392,6 +419,7 @@
                 <button class="admin-tab" onclick="switchTab('clients', this)">Clients</button>
                 <button class="admin-tab" onclick="switchTab('projects', this)">Projects</button>
                 <button class="admin-tab" onclick="switchTab('project-media', this)">Project Gallery</button>
+                <button class="admin-tab" onclick="switchTab('security', this)">Security</button>
             </div>
 
             <div class="tab-panel active" id="tab-posters">
@@ -610,7 +638,39 @@
                 </div>
             </div>
 
-        </div></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+            <div class="tab-panel" id="tab-security">
+                <div class="admin-section-title">Two-Factor Authentication</div>
+                <div class="admin-section-desc">Adds a second step (a 6-digit code from an authenticator app) when logging in. Strongly recommended, this account can edit or delete everything on the site.</div>
+
+                <div id="mfa-status-off" style="display:none;">
+                    <p style="font-family:'DM Sans', sans-serif; color: rgba(255,255,255,0.6); margin-bottom: 20px;">Status: <strong style="color:#ff6b6b;">Not enabled</strong></p>
+                    <button class="btn" style="margin-top:0;" onclick="startMfaEnrollment()">Enable 2FA</button>
+                </div>
+
+                <div id="mfa-status-on" style="display:none;">
+                    <p style="font-family:'DM Sans', sans-serif; color: rgba(255,255,255,0.6); margin-bottom: 20px;">Status: <strong style="color:var(--yellow);">Enabled</strong></p>
+                    <button class="btn" style="margin-top:0; background:transparent; border-color:#ff6b6b; color:#ff6b6b;" onclick="disableMfa()">Disable 2FA</button>
+                </div>
+
+                <div id="mfa-enroll-panel" style="display:none; margin-top:30px; padding:24px; border:1px dashed var(--border); border-radius:4px; max-width:400px;">
+                    <p class="existing-label" style="margin-bottom:14px;">1. Scan this with your authenticator app</p>
+                    <img id="mfa-qr" style="width:180px; height:180px; background:#fff; padding:8px; border-radius:4px; display:block; margin-bottom:14px;" alt="QR code, scan with an authenticator app such as Google Authenticator or Authy">
+                    <p style="font-family:'DM Sans', sans-serif; font-size:0.75rem; color: rgba(255,255,255,0.4); margin-bottom: 20px;">Can't scan? Enter this code manually: <code id="mfa-secret" style="color:var(--yellow); word-break:break-all;"></code></p>
+
+                    <p class="existing-label" style="margin-bottom:10px;">2. Enter the 6-digit code it shows</p>
+                    <input type="text" id="mfa-enroll-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="123456" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%; margin-bottom: 14px;">
+                    <button class="btn" style="margin-top:0;" onclick="confirmMfaEnrollment()">Confirm &amp; Enable</button>
+                    <button class="btn" style="margin-top:0; margin-left:10px; background:transparent; border-color:var(--border); color:var(--white);" onclick="cancelMfaEnrollment()">Cancel</button>
+                </div>
+
+                <div class="status-msg" id="mfa-status-msg" style="margin-top: 20px;"></div>
+
+                <div style="margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border);">
+                    <p style="font-family:'DM Sans', sans-serif; font-size:0.78rem; color: rgba(255,255,255,0.35); max-width: 560px;">Lost your authenticator device and can't get in? 2FA has to be removed from the Supabase dashboard directly (Authentication → Users → this account → remove MFA factor), not from this page, since this page requires being logged in to reach.</p>
+                </div>
+            </div>
+
+        </div></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.5/dist/umd/supabase.js" integrity="sha384-fTq5g8tD1IgcQKSKKNu5HdZncuhKN6e5MmGdzPNCK4jk3lh0tfnPZAtrUvyvgt4i" crossorigin="anonymous"></script>
     <script src="db.js"></script>
     <script>
     /* ── CONFIG ─────────────────────────────────────────── */
@@ -620,52 +680,63 @@
     const COMPRESS_QUALITY = 0.82;
 
     /* ── AUTH ───────────────────────────────────────────── */
+    function enterShell() {
+        document.getElementById('auth-overlay').style.display = 'none';
+        const shell = document.getElementById('admin-shell');
+        shell.style.display = 'block';
+        loadPosters();
+        loadVideos();
+        if (typeof loadClients === 'function') loadClients();
+        if (typeof loadCategories === 'function') loadCategories();
+        if (typeof loadProjects === 'function') loadProjects();
+        if (typeof loadSiteContent === 'function') loadSiteContent();
+        if (typeof loadProjectMedia === 'function') loadProjectMedia();
+        if (typeof loadMfaStatus === 'function') loadMfaStatus();
+
+        // Test connection indicator
+        db.from('site_content').select('id').limit(1).then(({ error }) => {
+            const dot = document.getElementById('conn-status-dot');
+            if (error) {
+                dot.style.backgroundColor = '#ff6b6b';
+                dot.title = 'Database Connection Failed: ' + error.message;
+            } else {
+                dot.style.backgroundColor = 'var(--green)';
+                dot.title = 'Database Connected Successfully';
+            }
+        });
+    }
+
+    // Called after any session is established (page load with an existing
+    // session, or right after password sign-in). Decides whether the
+    // session still needs a second factor before the shell is shown.
+    async function proceedPastLogin() {
+        const { data: aal, error: aalErr } = await db.auth.mfa.getAuthenticatorAssuranceLevel();
+        if (aalErr) { console.error('MFA level check failed:', aalErr.message); return; }
+
+        if (aal.nextLevel === 'aal2' && aal.currentLevel !== aal.nextLevel) {
+            document.getElementById('login-step').style.display = 'none';
+            document.getElementById('mfa-step').style.display = 'flex';
+            document.getElementById('mfa-code').focus();
+            return;
+        }
+        enterShell();
+    }
+
     // Auto-check if already logged in when the page loads
     window.addEventListener('DOMContentLoaded', async () => {
         const { data: { session } } = await db.auth.getSession();
-        if (session) {
-            document.getElementById('auth-overlay').style.display = 'none';
-            const shell = document.getElementById('admin-shell');
-            shell.style.display = 'block';
-            loadPosters();
-            loadVideos();
-            if (typeof loadClients === 'function') loadClients();
-            if (typeof loadCategories === 'function') loadCategories();
-            if (typeof loadProjects === 'function') loadProjects();
-            if (typeof loadSiteContent === 'function') loadSiteContent();
-            if (typeof loadProjectMedia === 'function') loadProjectMedia();
-
-            // Test connection indicator
-            db.from('site_content').select('id').limit(1).then(({ error }) => {
-                const dot = document.getElementById('conn-status-dot');
-                if (error) {
-                    dot.style.backgroundColor = '#ff6b6b';
-                    dot.title = 'Database Connection Failed: ' + error.message;
-                } else {
-                    dot.style.backgroundColor = 'var(--green)';
-                    dot.title = 'Database Connected Successfully';
-                }
-            });
-        }
+        if (session) proceedPastLogin();
     });
 
     async function checkAuth() {
         const email = document.getElementById('admin-email').value.trim();
         const pass = document.getElementById('admin-pass').value;
-        
+
         const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
-        
+
         if (!error && data.session) {
-            document.getElementById('auth-overlay').style.display = 'none';
-            const shell = document.getElementById('admin-shell');
-            shell.style.display = 'block';
-            loadPosters();
-            loadVideos();
-            if (typeof loadClients === 'function') loadClients();
-            if (typeof loadCategories === 'function') loadCategories();
-            if (typeof loadProjects === 'function') loadProjects();
-            if (typeof loadSiteContent === 'function') loadSiteContent();
-            if (typeof loadProjectMedia === 'function') loadProjectMedia();
+            document.getElementById('auth-error').style.display = 'none';
+            proceedPastLogin();
         } else {
             const errEl = document.getElementById('auth-error');
             errEl.textContent = error ? error.message : 'Login failed.';
@@ -674,9 +745,117 @@
         }
     }
 
+    async function verifyMfaLogin() {
+        const code = document.getElementById('mfa-code').value.trim();
+        const errEl = document.getElementById('mfa-error');
+        errEl.style.display = 'none';
+
+        if (!/^\d{6}$/.test(code)) {
+            errEl.textContent = 'Enter the 6-digit code from your authenticator app.';
+            errEl.style.display = 'block';
+            return;
+        }
+
+        const { data: factors, error: listErr } = await db.auth.mfa.listFactors();
+        if (listErr || !factors.totp.length) {
+            errEl.textContent = 'No verification method found on this account.';
+            errEl.style.display = 'block';
+            return;
+        }
+        const factorId = factors.totp[0].id;
+
+        const { data: challenge, error: challengeErr } = await db.auth.mfa.challenge({ factorId });
+        if (challengeErr) {
+            errEl.textContent = challengeErr.message;
+            errEl.style.display = 'block';
+            return;
+        }
+
+        const { error: verifyErr } = await db.auth.mfa.verify({ factorId, challengeId: challenge.id, code });
+        if (verifyErr) {
+            errEl.textContent = 'Incorrect code. Try again.';
+            errEl.style.display = 'block';
+            document.getElementById('mfa-code').value = '';
+            document.getElementById('mfa-code').focus();
+            return;
+        }
+
+        enterShell();
+    }
+
     async function logOut() {
         await db.auth.signOut();
         window.location.href = 'index.html';
+    }
+
+    /* ── MFA MANAGEMENT (Security tab) ───────────────────── */
+    let pendingMfaFactorId = null;
+
+    async function loadMfaStatus() {
+        const { data, error } = await db.auth.mfa.listFactors();
+        if (error) return;
+        const hasVerifiedTotp = data.totp.some(f => f.status === 'verified');
+        document.getElementById('mfa-status-off').style.display = hasVerifiedTotp ? 'none' : 'block';
+        document.getElementById('mfa-status-on').style.display = hasVerifiedTotp ? 'block' : 'none';
+        if (hasVerifiedTotp) document.getElementById('mfa-enroll-panel').style.display = 'none';
+    }
+
+    async function startMfaEnrollment() {
+        setStatus('mfa-status-msg', 'loading', 'Generating your QR code…');
+        const { data, error } = await db.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Admin TOTP ' + Date.now() });
+        if (error) {
+            setStatus('mfa-status-msg', 'error', error.message);
+            return;
+        }
+        pendingMfaFactorId = data.id;
+        document.getElementById('mfa-qr').src = data.totp.qr_code;
+        document.getElementById('mfa-secret').textContent = data.totp.secret;
+        document.getElementById('mfa-enroll-panel').style.display = 'block';
+        clearStatus('mfa-status-msg');
+    }
+
+    async function confirmMfaEnrollment() {
+        const code = document.getElementById('mfa-enroll-code').value.trim();
+        if (!/^\d{6}$/.test(code)) {
+            setStatus('mfa-status-msg', 'error', 'Enter the 6-digit code shown in your authenticator app.');
+            return;
+        }
+        setStatus('mfa-status-msg', 'loading', 'Verifying…');
+
+        const { data: challenge, error: challengeErr } = await db.auth.mfa.challenge({ factorId: pendingMfaFactorId });
+        if (challengeErr) { setStatus('mfa-status-msg', 'error', challengeErr.message); return; }
+
+        const { error: verifyErr } = await db.auth.mfa.verify({ factorId: pendingMfaFactorId, challengeId: challenge.id, code });
+        if (verifyErr) {
+            setStatus('mfa-status-msg', 'error', 'Incorrect code, try again.');
+            return;
+        }
+
+        setStatus('mfa-status-msg', 'success', 'Two-factor authentication enabled.');
+        document.getElementById('mfa-enroll-code').value = '';
+        pendingMfaFactorId = null;
+        loadMfaStatus();
+    }
+
+    async function cancelMfaEnrollment() {
+        if (pendingMfaFactorId) {
+            await db.auth.mfa.unenroll({ factorId: pendingMfaFactorId }).catch(() => {});
+            pendingMfaFactorId = null;
+        }
+        document.getElementById('mfa-enroll-panel').style.display = 'none';
+        document.getElementById('mfa-enroll-code').value = '';
+        clearStatus('mfa-status-msg');
+    }
+
+    async function disableMfa() {
+        if (!confirm('Disable two-factor authentication? Anyone with the account password will be able to log in with no second step.')) return;
+        const { data, error } = await db.auth.mfa.listFactors();
+        if (error || !data.totp.length) return;
+        for (const factor of data.totp) {
+            await db.auth.mfa.unenroll({ factorId: factor.id });
+        }
+        setStatus('mfa-status-msg', 'success', 'Two-factor authentication disabled.');
+        loadMfaStatus();
     }
 
     /* ── TABS ───────────────────────────────────────────── */
@@ -753,6 +932,16 @@
             };
             reader.readAsDataURL(file);
         });
+    }
+
+    // Runs a file through the same compression as the Posters tab if it's an
+    // image, leaves it untouched if it's a video (project covers can be either).
+    async function compressIfImage(file) {
+        if (!file.type.startsWith('image/')) {
+            return { blob: file, ext: file.name.split('.').pop(), contentType: file.type };
+        }
+        const blob = await compressImage(file);
+        return { blob, ext: 'jpg', contentType: 'image/jpeg' };
     }
 
     /* ── POSTER UPLOAD ──────────────────────────────────── */
@@ -1152,9 +1341,9 @@
         let banner_url = null;
         
         if (bannerFile) {
-            const ext = bannerFile.name.split('.').pop();
+            const { blob, ext, contentType } = await compressIfImage(bannerFile);
             const fileName = `client_${Date.now()}.${ext}`;
-            const { error: uploadErr } = await db.storage.from(BUCKET).upload(fileName, bannerFile, { upsert: true });
+            const { error: uploadErr } = await db.storage.from(BUCKET).upload(fileName, blob, { upsert: true, contentType });
             if (uploadErr) { setStatus('client-status', 'error', 'Banner upload failed: ' + uploadErr.message); return; }
             const { data: urlData } = db.storage.from(BUCKET).getPublicUrl(fileName);
             banner_url = urlData.publicUrl;
@@ -1268,7 +1457,7 @@
             <div class="project-row" data-id="${p.id}" draggable="true" style="padding: 16px; border: 1px solid var(--border); margin-bottom: 12px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
                 <div style="display:flex; gap: 16px; align-items: center;">
                     <div class="drag-handle" title="Drag to reorder">☰</div>
-                    ${p.cover_url ? (p.cover_url.match(/\.(mp4|webm)$/i) ? `<video src="${p.cover_url}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;" muted></video>` : `<img src="${p.cover_url}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">`) : ''}
+                    ${p.cover_url ? (p.cover_url.match(/\.(mp4|webm)$/i) ? `<video src="${p.cover_url}" preload="metadata" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;" muted></video>` : `<img src="${p.cover_url}" loading="lazy" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">`) : ''}
                     <div>
                         <strong style="color: var(--yellow); font-family: 'Cabinet Grotesk', sans-serif;">${p.title}</strong>
                         <div style="font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 4px;">
@@ -1397,7 +1586,7 @@
             pWrap.style.display = 'block';
             pBar.style.width = '20%';
 
-            const ext = file.name.split('.').pop();
+            const { blob, ext, contentType } = await compressIfImage(file);
             const fileName = `proj_${Date.now()}.${ext}`;
 
             // Auto-clean old cover image from storage if replacing
@@ -1406,7 +1595,9 @@
                 db.storage.from(BUCKET).remove([oldFileName]).catch(() => {});
             }
 
-            const { error: uploadErr } = await db.storage.from(BUCKET).upload(fileName, file, { upsert: true });
+            pBar.style.width = '40%';
+
+            const { error: uploadErr } = await db.storage.from(BUCKET).upload(fileName, blob, { upsert: true, contentType });
             if (uploadErr) {
                 setStatus('project-status', 'error', 'Upload failed: ' + uploadErr.message);
                 btn.disabled = false; pWrap.style.display = 'none'; return;
@@ -1494,10 +1685,10 @@
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            const ext = file.name.split('.').pop();
+            const { blob, ext, contentType } = await compressIfImage(file);
             const fileName = `gallery_${Date.now()}_${i}.${ext}`;
 
-            const { error: uploadErr } = await db.storage.from(BUCKET).upload(fileName, file, { upsert: true });
+            const { error: uploadErr } = await db.storage.from(BUCKET).upload(fileName, blob, { upsert: true, contentType });
             if (uploadErr) { errorMsg = uploadErr.message; continue; }
 
             const { data: urlData } = db.storage.from(BUCKET).getPublicUrl(fileName);
