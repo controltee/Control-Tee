@@ -599,13 +599,34 @@
                     
                     <input type="text" id="project-date" placeholder="Date Made (e.g., October 2025)" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%;">
                     <textarea id="project-desc" placeholder="Project Description..." style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%; min-height: 100px; resize: vertical;"></textarea>
-                    
+
+                    <div>
+                        <label style="display:block; margin-bottom: 8px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; letter-spacing: 1px; text-transform: uppercase; font-size: 0.8rem;">Layout Style</label>
+                        <select id="project-layout" onchange="toggleLayoutFields()" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: var(--black); color: var(--white); width: 100%;">
+                            <option value="marquee">Poster Marquee (default)</option>
+                            <option value="stack">Behance-Style Stack</option>
+                            <option value="embed">Embed</option>
+                        </select>
+                    </div>
+
+                    <div id="project-gap-field" style="display:none;">
+                        <label style="display:block; margin-bottom: 8px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; letter-spacing: 1px; text-transform: uppercase; font-size: 0.8rem;">Spacing Between Images (px)</label>
+                        <div class="upload-hint" style="margin-bottom: 12px;">0 = seamless, images butt edge to edge like a Behance case study. Upload the images themselves in the Project Gallery tab.</div>
+                        <input type="number" id="project-image-gap" value="0" min="0" max="200" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%;">
+                    </div>
+
+                    <div id="project-embed-field" style="display:none;">
+                        <label style="display:block; margin-bottom: 8px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; letter-spacing: 1px; text-transform: uppercase; font-size: 0.8rem;">Embed URL</label>
+                        <div class="upload-hint" style="margin-bottom: 12px;">Paste the embed src from YouTube, Vimeo, Behance, or Figma's share/embed menu, not the regular page link.</div>
+                        <input type="url" id="project-embed-url" placeholder="https://www.youtube.com/embed/..." style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%;">
+                    </div>
+
                     <div style="border: 1px dashed var(--border); padding: 20px; border-radius: 4px; background: rgba(255,255,255,0.02);">
                         <label id="project-cover-label" style="display:block; margin-bottom: 8px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; letter-spacing: 1px; text-transform: uppercase; font-size: 0.8rem;">Cover Media (Image or Video)</label>
-                        <div class="upload-hint" style="margin-bottom: 12px;">Recommended: 1440 × 1080 px (4:3) · Max 5MB for Video, 2MB for Image</div>
+                        <div class="upload-hint" style="margin-bottom: 12px;">Recommended: 1440 × 1080 px (4:3) · Max 5MB for Video, 2MB for Image. Shown at the top of the project page regardless of layout style.</div>
                         <input type="file" id="project-cover" accept="image/*,video/mp4,video/webm" style="color:var(--white);">
                     </div>
-                    
+
                     <div class="status-msg" id="project-status"></div>
                     <div class="progress-wrap" id="proj-progress-wrap" style="display:none; margin-top: 10px;"><div class="progress-bar" id="proj-progress-bar"></div></div>
                 </div>
@@ -1607,7 +1628,11 @@
         document.getElementById('project-client').value = p.client_id || '';
         document.getElementById('project-date').value = p.date_made || '';
         document.getElementById('project-desc').value = p.description || '';
-        
+        document.getElementById('project-layout').value = p.layout_type || 'marquee';
+        document.getElementById('project-image-gap').value = (p.image_gap ?? 0);
+        document.getElementById('project-embed-url').value = p.embed_url || '';
+        toggleLayoutFields();
+
         document.getElementById('project-section-title').textContent = 'Edit Project';
         document.getElementById('cancel-edit-proj-btn').style.display = 'block';
         document.getElementById('project-cover-label').innerHTML = 'Cover Media <span style="text-transform:none; color:rgba(255,255,255,0.4); font-size:0.7rem; margin-left:8px;">(Leave blank to keep existing)</span>';
@@ -1624,11 +1649,21 @@
         document.getElementById('project-date').value = '';
         document.getElementById('project-desc').value = '';
         document.getElementById('project-cover').value = '';
-        
+        document.getElementById('project-layout').value = 'marquee';
+        document.getElementById('project-image-gap').value = 0;
+        document.getElementById('project-embed-url').value = '';
+        toggleLayoutFields();
+
         document.getElementById('project-section-title').textContent = 'Manage Projects';
         document.getElementById('cancel-edit-proj-btn').style.display = 'none';
         document.getElementById('project-cover-label').innerHTML = 'Cover Media (Image or Video)';
         clearStatus('project-status');
+    }
+
+    function toggleLayoutFields() {
+        const layout = document.getElementById('project-layout').value;
+        document.getElementById('project-gap-field').style.display = layout === 'stack' ? 'block' : 'none';
+        document.getElementById('project-embed-field').style.display = layout === 'embed' ? 'block' : 'none';
     }
 
     async function saveProject() {
@@ -1637,6 +1672,9 @@
         const client_id = document.getElementById('project-client').value || null;
         const date_made = document.getElementById('project-date').value.trim();
         const description = document.getElementById('project-desc').value.trim();
+        const layout_type = document.getElementById('project-layout').value;
+        const image_gap = parseInt(document.getElementById('project-image-gap').value, 10) || 0;
+        const embed_url = document.getElementById('project-embed-url').value.trim() || null;
         const fileInput = document.getElementById('project-cover');
         const file = fileInput.files[0];
 
@@ -1686,10 +1724,10 @@
 
         let dbData, dbErr;
         if (currentEditProjectId) {
-            const res = await db.from('projects').update({ title, category_id, client_id, cover_url, date_made, description }).eq('id', currentEditProjectId).select();
+            const res = await db.from('projects').update({ title, category_id, client_id, cover_url, date_made, description, layout_type, image_gap, embed_url }).eq('id', currentEditProjectId).select();
             dbData = res.data; dbErr = res.error;
         } else {
-            const res = await db.from('projects').insert({ title, category_id, client_id, cover_url, date_made, description }).select();
+            const res = await db.from('projects').insert({ title, category_id, client_id, cover_url, date_made, description, layout_type, image_gap, embed_url }).select();
             dbData = res.data; dbErr = res.error;
         }
         

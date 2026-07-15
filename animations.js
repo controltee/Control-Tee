@@ -6,6 +6,19 @@
 
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/* ── SEAMLESS MARQUEE SPEED ─────────────────────────── */
+// The track's content is duplicated for the seamless loop, so half its
+// scroll width is one full lap. Setting a constant px/second speed means
+// the loop takes longer as more items are added instead of feeling more
+// frantic, only animation-duration is touched, the rest of the animation
+// (timing function, iteration count, keyframe) stays defined in style.css.
+window.runSeamlessMarquee = function (track, pxPerSecond) {
+    if (!track || prefersReducedMotion) return;
+    const distance = track.scrollWidth / 2;
+    if (!distance) return;
+    track.style.animationDuration = Math.max(distance / pxPerSecond, 8) + 's';
+};
+
 /* ── SCRAMBLE ENGINE ────────────────────────────────── */
 const SCRAMBLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#@!?%$*';
 
@@ -518,4 +531,41 @@ document.addEventListener('contextmenu', e => {
             setTimeout(() => { window.location.href = href; }, 800);
         });
     });
+})();
+
+/* ── DESKTOP TASKBAR: LIVE STATUS ────────────────────── */
+(function () {
+    const taskbar = document.querySelector('.desktop-taskbar');
+    if (!taskbar) return;
+
+    setTimeout(() => taskbar.classList.add('visible'), 900);
+
+    const statusEl = document.getElementById('taskbar-status');
+    const sections = document.querySelectorAll('[data-taskbar-label]');
+    if (statusEl && sections.length) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                const label = entry.target.dataset.taskbarLabel;
+                if (statusEl.textContent === label) return;
+                statusEl.style.opacity = '0';
+                setTimeout(() => { statusEl.textContent = label; statusEl.style.opacity = '1'; }, 150);
+            });
+        }, { threshold: 0.5 });
+        sections.forEach(s => observer.observe(s));
+    }
+
+    const progressEl = document.getElementById('taskbar-progress');
+    if (progressEl && !prefersReducedMotion) {
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (ticking) return;
+            ticking = true;
+            requestAnimationFrame(() => {
+                const max = document.documentElement.scrollHeight - window.innerHeight;
+                progressEl.style.width = (max > 0 ? (window.scrollY / max) * 100 : 0) + '%';
+                ticking = false;
+            });
+        }, { passive: true });
+    }
 })();

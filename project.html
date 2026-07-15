@@ -57,9 +57,19 @@
             </div>
         </div>
         
-        <!-- Additional Gallery Marquee -->
+        <!-- Layout style A: horizontal gallery marquee -->
         <div id="project-gallery-container" class="poster-marquee-container" style="display:none; padding-top:60px;">
             <div class="poster-marquee" id="gallery-track"></div>
+        </div>
+
+        <!-- Layout style B: Behance-style seamless vertical stack -->
+        <div id="project-stack-container" class="project-stack" style="display:none;"></div>
+
+        <!-- Layout style C: embed (video, Figma, etc.) -->
+        <div id="project-embed-container" style="display:none; padding-top:60px;">
+            <div class="project-embed-wrap">
+                <iframe id="project-embed-frame" allow="autoplay; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" loading="lazy"></iframe>
+            </div>
         </div>
     </main>
 
@@ -125,15 +135,47 @@
                     ? `<video src="${safeCoverUrl}" autoplay muted loop playsinline style="width:100%; max-height: 85vh; object-fit:cover; display:block;"></video>`
                     : `<img src="${safeCoverUrl}" style="width:100%; max-height: 85vh; object-fit:cover; display:block;" alt="${safeTitle}">`;
 
-                // Load Additional Gallery Images
-                const { data: mediaFiles, error: mediaErr } = await supabase.from('project_media').select('media_url').eq('project_id', id);
-                if (mediaErr) {
-                    console.error("Gallery Load Error:", mediaErr.message);
-                } else if (mediaFiles && mediaFiles.length > 0) {
-                    const track = document.getElementById('gallery-track');
-                    let html = mediaFiles.map(m => `<img src="${escapeHtml(m.media_url)}" alt="${safeTitle} Gallery" class="poster-item" loading="lazy">`).join('');
-                    track.innerHTML = html + html;
-                    document.getElementById('project-gallery-container').style.display = 'block';
+                const layoutType = project.layout_type || 'marquee';
+
+                if (layoutType === 'embed') {
+                    if (project.embed_url) {
+                        document.getElementById('project-embed-frame').src = project.embed_url;
+                        document.getElementById('project-embed-container').style.display = 'block';
+                    }
+                } else {
+                    // Both the marquee and the stack layout pull from the same
+                    // Project Gallery uploads, they just present them differently.
+                    const { data: mediaFiles, error: mediaErr } = await supabase.from('project_media').select('media_url').eq('project_id', id);
+                    if (mediaErr) {
+                        console.error("Gallery Load Error:", mediaErr.message);
+                    } else if (mediaFiles && mediaFiles.length > 0) {
+                        if (layoutType === 'stack') {
+                            const stack = document.getElementById('project-stack-container');
+                            stack.style.gap = (project.image_gap || 0) + 'px';
+                            stack.innerHTML = mediaFiles.map(m =>
+                                `<img src="${escapeHtml(m.media_url)}" alt="${safeTitle} Gallery" class="reveal" loading="lazy">`
+                            ).join('');
+                            stack.style.display = 'flex';
+
+                            // animations.js's scroll-reveal observer only queries .reveal
+                            // once at load, before this content exists, so these images
+                            // need their own observer instance.
+                            const stackObserver = new IntersectionObserver((entries) => {
+                                entries.forEach(entry => {
+                                    if (!entry.isIntersecting) return;
+                                    entry.target.classList.add('is-visible');
+                                    stackObserver.unobserve(entry.target);
+                                });
+                            }, { threshold: 0.1 });
+                            stack.querySelectorAll('.reveal').forEach(el => stackObserver.observe(el));
+                        } else {
+                            const track = document.getElementById('gallery-track');
+                            let html = mediaFiles.map(m => `<img src="${escapeHtml(m.media_url)}" alt="${safeTitle} Gallery" class="poster-item" loading="lazy">`).join('');
+                            track.innerHTML = html + html;
+                            document.getElementById('project-gallery-container').style.display = 'block';
+                            if (window.runSeamlessMarquee) window.runSeamlessMarquee(track, 70);
+                        }
+                    }
                 }
             } catch (err) {
                 console.error(err);

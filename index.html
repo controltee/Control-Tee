@@ -55,7 +55,7 @@
     </div>
 
     <!-- Hero -->
-    <header class="hero">
+    <header class="hero" data-taskbar-label="Home">
         <video autoplay muted loop playsinline class="hero-video" id="hero-video" style="display:none;"></video>
         <div class="hero-overlay"></div>
         <div class="hero-content">
@@ -91,7 +91,7 @@
     </div>
 
     <!-- About -->
-    <section class="about-section">
+    <section class="about-section" data-taskbar-label="About">
         <div class="container">
             <div class="about-grid reveal">
                 <div class="about-tag">CTRL<br>+T</div>
@@ -126,7 +126,7 @@
     </section>
 
     <!-- Selected Work -->
-    <main id="work">
+    <main id="work" data-taskbar-label="Selected Projects">
         <div class="container">
             <h2 class="section-title reveal" data-scramble>Selected Projects</h2>
             <div class="portfolio-grid">
@@ -165,7 +165,7 @@
     </main>
 
     <!-- Partners -->
-    <section class="partners-section" id="partners-section" style="display:none;">
+    <section class="partners-section" id="partners-section" data-taskbar-label="Clients &amp; Collaborators" style="display:none;">
         <p class="partners-label reveal">Clients &amp; Collaborators</p>
         <div class="partners-marquee">
             <div class="partners-track" id="partners-track"></div>
@@ -174,13 +174,14 @@
 
     <!-- Desktop Taskbar -->
     <div class="desktop-taskbar">
+        <div class="taskbar-progress" id="taskbar-progress"></div>
         <div class="taskbar-left">
             <span class="taskbar-item taskbar-logo">CT</span>
             <span class="taskbar-divider"></span>
             <span class="taskbar-item" id="taskbar-time"></span>
         </div>
         <div class="taskbar-center">
-            <span class="taskbar-item">4 folders open</span>
+            <span class="taskbar-item" id="taskbar-status">Home</span>
         </div>
         <div class="taskbar-right">
             <a href="https://www.instagram.com/control.tee/" target="_blank" class="taskbar-item">IG</a>
@@ -243,6 +244,7 @@
                     let html = posters.map(p => `<img src="${escapeHtml(p.image_url)}" alt="Control Tee Poster" class="poster-item" loading="lazy">`).join('');
                     track.innerHTML = html + html;
                     section.style.display = 'block';
+                    if (window.runSeamlessMarquee) window.runSeamlessMarquee(track, 70);
                 }
             }
 
@@ -258,6 +260,7 @@
                     const hidden = logos.map(l => `<img src="${escapeHtml(l.logo_url)}" alt="${escapeHtml(l.name)}" class="partner-logo" aria-hidden="true" loading="lazy">`).join('');
                     track.innerHTML = visible + hidden;
                     section.style.display = 'block';
+                    if (window.runSeamlessMarquee) window.runSeamlessMarquee(track, 90);
                 }
             }
 
