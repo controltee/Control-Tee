@@ -704,12 +704,30 @@ body.high-contrast { --black: #000; --white: #fff; --yellow: #fff200; --green: #
     letter-spacing: 1px;
 }
 
+/* ── LEGAL PAGES ─────────────────────────────────────── */
+.legal-section { padding: 160px 20px 100px; }
+.legal-content { max-width: 780px; margin: 0 auto; }
+.legal-updated { font-family: 'DM Sans', sans-serif; font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 40px; }
+.legal-notice { border: 1px dashed var(--border); border-radius: 4px; padding: 24px 28px; margin-bottom: 50px; background: rgba(247,213,79,0.03); }
+.legal-notice p { font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 300; color: rgba(255,255,255,0.7); line-height: 1.7; margin: 0; }
+.legal-notice strong { color: var(--yellow); }
+.legal-content h2 { font-family: 'Cabinet Grotesk', sans-serif; font-size: clamp(1.3rem, 2.4vw, 1.8rem); font-weight: 800; color: var(--yellow); text-transform: uppercase; letter-spacing: -0.5px; margin: 48px 0 18px; }
+.legal-content h2:first-of-type { margin-top: 0; }
+.legal-content p { font-family: 'DM Sans', sans-serif; font-size: 0.98rem; font-weight: 300; color: rgba(255,255,255,0.68); line-height: 1.85; margin-bottom: 16px; }
+.legal-content ul, .legal-content ol { font-family: 'DM Sans', sans-serif; font-size: 0.98rem; font-weight: 300; color: rgba(255,255,255,0.68); line-height: 1.85; margin: 0 0 16px 22px; }
+.legal-content li { margin-bottom: 8px; }
+.legal-content a { color: var(--yellow); }
+.legal-content strong { color: var(--white); font-weight: 600; }
+
 /* ── FOOTER ─────────────────────────────────────────── */
 .main-footer { padding: 60px 20px 44px; text-align: center; border-top: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; gap: 26px; }
 .social-links { display: flex; gap: 32px; }
 .social-links a { font-family: 'Cabinet Grotesk', sans-serif; color: var(--white); text-decoration: none; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; transition: color 0.3s ease; }
 .social-links a:hover { color: var(--yellow); }
 .footer-copy { font-family: 'DM Sans', sans-serif; font-size: 0.72rem; font-weight: 300; color: rgba(255, 255, 255, 0.28); }
+.footer-legal { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+.footer-legal a { font-family: 'DM Sans', sans-serif; font-size: 0.7rem; color: rgba(255, 255, 255, 0.35); text-decoration: none; letter-spacing: 1px; text-transform: uppercase; transition: color 0.3s ease; }
+.footer-legal a:hover { color: var(--yellow); }
 
 /* ── RESPONSIVE ─────────────────────────────────────── */
 @media (max-width: 900px) {

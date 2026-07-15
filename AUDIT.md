@@ -28,6 +28,9 @@ Branch: `feature/site-audit-and-fixes`. Generated as the working checklist for t
 
 ## 2. Findings and fixes
 
+### Newly discovered during the fix loop
+- [x] `contact.html` had no `<footer>` at all (every other page has one with social links). Added the standard footer for consistency, now also carrying the legal page links.
+
 ### Priority 1 — Broken / dead code
 - [x] `mg-motion.html` back-link points to non-existent `motion-design.html`; "Back" nav in `project-template.html` points to non-existent `brand-identity.html`. Both pages are orphaned (nothing in the site links to them). Fixed dead links rather than deleting the files (deletion needs explicit sign-off per guardrails) — flagged in Handover as delete candidates.
 - [x] `index.html`'s `loadDynamicContent()` has no error handling — if `db.js`/Supabase CDN fails to load (ad-blocker, offline, CDN outage), the whole script throws uncaught and silently breaks the homepage's dynamic content with no fallback. `category.html`/`project.html` already guard this with try/catch; `index.html` did not.
@@ -52,7 +55,7 @@ Branch: `feature/site-audit-and-fixes`. Generated as the working checklist for t
 ### Priority 4 — Performance
 - [x] Fonts loaded via CSS `@import` in `style.css`, which serializes the font fetch behind the stylesheet fetch (render-blocking, not discoverable by the preload scanner). Converted to `<link rel="preconnect">` + `<link rel="stylesheet">` tags in each page's `<head>`.
 - [x] No `loading="lazy"` on dynamically rendered poster/project images in `category.html`, `project.html`, `index.html`'s poster marquee.
-- [ ] No `Cache-Control` headers for static assets (fonts, images, video) in `vercel.json`. Added long-lived caching for `/assets/*`.
+- [x] No `Cache-Control` headers for static assets (fonts, images, video) in `vercel.json`. Added long-lived caching for `/assets/*`.
 
 ### Priority 5 — SEO / metadata
 - [x] No favicon on any page. Added, using the existing logo asset.
