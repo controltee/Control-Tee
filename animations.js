@@ -84,11 +84,24 @@ function typeWriter(el, text, speed, onComplete) {
     }
 
     let frame = 0;
-    (function animateGrain() {
+    let rafId = null;
+    function animateGrain() {
         frame++;
         if (frame % 3 === 0) generateNoise(); /* refresh every 3 frames ~20fps */
-        requestAnimationFrame(animateGrain);
-    })();
+        rafId = requestAnimationFrame(animateGrain);
+    }
+    rafId = requestAnimationFrame(animateGrain);
+
+    // Stop entirely in a background tab instead of relying on browser rAF
+    // throttling, which is inconsistent across browsers.
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            if (rafId) cancelAnimationFrame(rafId);
+            rafId = null;
+        } else if (!rafId) {
+            rafId = requestAnimationFrame(animateGrain);
+        }
+    });
 })();
 
 /* ── PRELOADER ──────────────────────────────────────── */
@@ -430,7 +443,8 @@ document.addEventListener('contextmenu', e => {
     let mouseX = 0, mouseY = 0;
     document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
 
-    (function animateTrail() {
+    let trailRafId = null;
+    function animateTrail() {
         let px = mouseX, py = mouseY;
         dots.forEach((dot, i) => {
             const ease = 0.25 - i * 0.02;
@@ -440,8 +454,20 @@ document.addEventListener('contextmenu', e => {
             dot.el.style.top  = dot.y + 'px';
             px = dot.x; py = dot.y;
         });
-        requestAnimationFrame(animateTrail);
-    })();
+        trailRafId = requestAnimationFrame(animateTrail);
+    }
+    trailRafId = requestAnimationFrame(animateTrail);
+
+    // Stop entirely in a background tab instead of relying on browser rAF
+    // throttling, which is inconsistent across browsers.
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            if (trailRafId) cancelAnimationFrame(trailRafId);
+            trailRafId = null;
+        } else if (!trailRafId) {
+            trailRafId = requestAnimationFrame(animateTrail);
+        }
+    });
 
     document.addEventListener('mouseleave', () => dots.forEach(d => d.el.style.opacity = '0'));
     document.addEventListener('mouseenter', () => dots.forEach((d, i) => d.el.style.opacity = `${(1 - i / DOT_COUNT) * 0.55}`));
