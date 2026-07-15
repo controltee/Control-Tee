@@ -56,7 +56,7 @@
         <p class="footer-copy">&copy; 2026 Control Tee</p>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.5/dist/umd/supabase.js" integrity="sha384-fTq5g8tD1IgcQKSKKNu5HdZncuhKN6e5MmGdzPNCK4jk3lh0tfnPZAtrUvyvgt4i" crossorigin="anonymous"></script>
     <script src="db.js"></script>
     <script>
         const supabase = window.db;
@@ -115,8 +115,10 @@
                     const isVideo = p.cover_url && p.cover_url.match(/\.(mp4|webm)$/i);
                     const title = escapeHtml(p.title);
                     const coverUrl = escapeHtml(p.cover_url);
+                    // Video covers use data-src instead of src so they don't all start
+                    // downloading/playing at once, see lazyLoadCardVideos() below.
                     const mediaHtml = isVideo
-                        ? `<video src="${coverUrl}" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover;display:block;"></video>`
+                        ? `<video data-src="${coverUrl}" muted loop playsinline preload="none" style="width:100%;height:100%;object-fit:cover;display:block;"></video>`
                         : `<img src="${coverUrl}" alt="${title}" loading="lazy">`;
 
                     return `
@@ -129,11 +131,32 @@
                         </a>
                     `;
                 }).join('');
+
+                lazyLoadCardVideos();
             } catch (err) {
                 console.error(err);
                 document.getElementById('category-title').textContent = 'System Error';
                 document.getElementById('projects-grid').innerHTML = `<div class="empty-state" style="grid-column: 1/-1;">JS Exception: ${err.message}</div>`;
             }
+        }
+
+        // Only starts loading/playing a project card's cover video once it's
+        // actually about to scroll into view, instead of every video on the
+        // page requesting its full file at once.
+        function lazyLoadCardVideos() {
+            const videos = document.querySelectorAll('#projects-grid video[data-src]');
+            if (!videos.length) return;
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+                    const video = entry.target;
+                    video.src = video.dataset.src;
+                    video.removeAttribute('data-src');
+                    video.play().catch(() => {});
+                    observer.unobserve(video);
+                });
+            }, { rootMargin: '200px' });
+            videos.forEach(v => observer.observe(v));
         }
 
         loadCategory();
