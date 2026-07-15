@@ -165,21 +165,10 @@
     </main>
 
     <!-- Partners -->
-    <section class="partners-section">
+    <section class="partners-section" id="partners-section" style="display:none;">
         <p class="partners-label reveal">Clients &amp; Collaborators</p>
         <div class="partners-marquee">
-            <div class="partners-track">
-                <img src="assets/clients/rakwifi-logo.png" alt="Rakwifi" class="partner-logo">
-                <img src="assets/clients/starehe-girls-logo.png" alt="Starehe Girls" class="partner-logo">
-                <img src="assets/clients/ru-logo.png" alt="Riara University" class="partner-logo">
-                <img src="assets/clients/wine-and-bottle-logo.png" alt="Wine & Bottle" class="partner-logo">
-                
-                <!-- Duplicated for Infinite Marquee Effect - hidden from screen readers -->
-                <img src="assets/clients/rakwifi-logo.png" alt="Rakwifi" class="partner-logo" aria-hidden="true">
-                <img src="assets/clients/starehe-girls-logo.png" alt="Starehe Girls" class="partner-logo" aria-hidden="true">
-                <img src="assets/clients/ru-logo.png" alt="Riara University" class="partner-logo" aria-hidden="true">
-                <img src="assets/clients/wine-and-bottle-logo.png" alt="Wine & Bottle" class="partner-logo" aria-hidden="true">
-            </div>
+            <div class="partners-track" id="partners-track"></div>
         </div>
     </section>
 
@@ -257,7 +246,22 @@
                 }
             }
 
-            // 3. Fetch Site Text dynamically
+            // 3. Fetch Client/Partner Logos automatically
+            const { data: logos, error: logosErr } = await supabase.from('partner_logos').select('name, logo_url').order('created_at', { ascending: true });
+            if (logosErr) {
+                console.error("Logo Load Error:", logosErr.message);
+            } else if (logos && logos.length > 0) {
+                const track = document.getElementById('partners-track');
+                const section = document.getElementById('partners-section');
+                if (track && section) {
+                    const visible = logos.map(l => `<img src="${escapeHtml(l.logo_url)}" alt="${escapeHtml(l.name)}" class="partner-logo" loading="lazy">`).join('');
+                    const hidden = logos.map(l => `<img src="${escapeHtml(l.logo_url)}" alt="${escapeHtml(l.name)}" class="partner-logo" aria-hidden="true" loading="lazy">`).join('');
+                    track.innerHTML = visible + hidden;
+                    section.style.display = 'block';
+                }
+            }
+
+            // 4. Fetch Site Text dynamically
             const { data: textData, error: textErr } = await supabase.from('site_content').select('*');
             if (textErr) {
                 console.error("Text Load Error:", textErr.message);

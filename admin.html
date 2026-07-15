@@ -419,6 +419,7 @@
                 <button class="admin-tab" onclick="switchTab('clients', this)">Clients</button>
                 <button class="admin-tab" onclick="switchTab('projects', this)">Projects</button>
                 <button class="admin-tab" onclick="switchTab('project-media', this)">Project Gallery</button>
+                <button class="admin-tab" onclick="switchTab('logos', this)">Logo Marquee</button>
                 <button class="admin-tab" onclick="switchTab('security', this)">Security</button>
             </div>
 
@@ -448,8 +449,11 @@
                 </div>
 
                 <div style="margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--border);">
-                    <p class="existing-label">Existing Posters</p>
-                    <div class="poster-thumb-grid" id="poster-thumb-grid">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <p class="existing-label">Existing Posters</p>
+                        <button class="del-btn" style="position:static;" onclick="clearAllPosters()">Clear All</button>
+                    </div>
+                    <div class="poster-thumb-grid" id="poster-thumb-grid" style="margin-top: 16px;">
                         <div class="empty-state" style="grid-column:1/-1;">Loading…</div>
                     </div>
                 </div>
@@ -525,6 +529,7 @@
                         <textarea id="edit-contact-body" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%; min-height: 120px; resize: vertical;"></textarea>
                     </div>
                     <div class="status-msg" id="site-content-status"></div>
+                    <button class="del-btn" style="position:static; width:fit-content;" onclick="resetAllSiteText()">Reset All Text</button>
                 </div>
             </div>
 
@@ -606,7 +611,10 @@
                 </div>
 
                 <div style="margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--border);">
-                    <p class="existing-label">Project Directory</p>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <p class="existing-label">Project Directory</p>
+                        <button class="del-btn" style="position:static;" onclick="clearAllProjectDescriptions()">Clear All Descriptions</button>
+                    </div>
                     <div id="project-list" style="margin-top: 16px;">
                         <div class="empty-state">Loading…</div>
                     </div>
@@ -634,6 +642,35 @@
                     <p class="existing-label">Uploaded Gallery Images</p>
                     <div id="media-gallery-list" style="margin-top: 16px;">
                         <div class="empty-state">Loading…</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-panel" id="tab-logos">
+                <div class="admin-section-title">Client &amp; Partner Logos</div>
+                <div class="admin-section-desc">Manages the scrolling logo strip at the bottom of the homepage. Recommended: transparent PNG, roughly 400 × 200 px.</div>
+
+                <div style="max-width: 500px; margin-bottom: 24px;">
+                    <label style="display:block; margin-bottom: 8px; color:var(--yellow); font-family: 'Cabinet Grotesk', sans-serif; letter-spacing: 1px; text-transform: uppercase; font-size: 0.8rem;">Client / Partner Name</label>
+                    <input type="text" id="logo-name" placeholder="e.g. Riara University" style="padding: 12px 18px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--white); width: 100%;">
+                </div>
+
+                <div class="upload-zone" id="logo-drop-zone">
+                    <input type="file" id="logo-file" accept="image/jpeg,image/png,image/webp">
+                    <div class="upload-icon">
+                        <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+                    </div>
+                    <div class="upload-label">Drop logo here or click to browse</div>
+                    <div class="upload-hint">JPEG · PNG · WEBP</div>
+                    <img id="logo-preview" class="upload-preview" alt="Preview">
+                </div>
+
+                <div class="status-msg" id="logo-status" style="margin-top: 16px;"></div>
+
+                <div style="margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--border);">
+                    <p class="existing-label">Existing Logos</p>
+                    <div class="poster-thumb-grid" id="logo-thumb-grid" style="margin-top: 16px;">
+                        <div class="empty-state" style="grid-column:1/-1;">Loading…</div>
                     </div>
                 </div>
             </div>
@@ -691,6 +728,7 @@
         if (typeof loadProjects === 'function') loadProjects();
         if (typeof loadSiteContent === 'function') loadSiteContent();
         if (typeof loadProjectMedia === 'function') loadProjectMedia();
+        if (typeof loadLogos === 'function') loadLogos();
         if (typeof loadMfaStatus === 'function') loadMfaStatus();
 
         // Test connection indicator
@@ -876,6 +914,7 @@
         else if (activeTab === 'tab-clients') await saveClient();
         else if (activeTab === 'tab-projects') await saveProject();
         else if (activeTab === 'tab-project-media') await uploadProjectMedia();
+        else if (activeTab === 'tab-logos') await uploadLogo();
     }
 
     /* ── STATUS HELPERS ─────────────────────────────────── */
@@ -1094,6 +1133,26 @@
         if (!grid.querySelector('.poster-thumb')) {
             grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">No posters yet.</div>';
         }
+    }
+
+    async function clearAllPosters() {
+        if (!confirm('Delete every poster from the homepage marquee? This removes the images and their records permanently.')) return;
+
+        setStatus('poster-status', 'loading', 'Clearing all posters…');
+
+        const { data, error } = await db.from('posters').select('id, image_url');
+        if (error) { setStatus('poster-status', 'error', 'Failed to load posters: ' + error.message); return; }
+        if (!data || !data.length) { setStatus('poster-status', 'error', 'No posters to clear.'); return; }
+
+        const fileNames = data.map(p => urlToFilename(p.image_url));
+        await db.storage.from(BUCKET).remove(fileNames);
+
+        const ids = data.map(p => p.id);
+        const { error: delErr } = await db.from('posters').delete().in('id', ids);
+        if (delErr) { setStatus('poster-status', 'error', 'Failed to clear posters: ' + delErr.message); return; }
+
+        setStatus('poster-status', 'success', `Cleared ${data.length} poster(s).`);
+        loadPosters();
     }
 
     /* ── VIDEO ──────────────────────────────────────────── */
@@ -1441,6 +1500,23 @@
         else { setStatus('site-content-status', 'success', 'Site text updated successfully!'); showSavedAssurance('global-save-btn'); loadSiteContent(); }
     }
 
+    async function resetAllSiteText() {
+        if (!confirm('Clear the homepage subtitle, about text, and contact intro? You will need to write new copy in the fields above.')) return;
+
+        setStatus('site-content-status', 'loading', 'Clearing…');
+        const updates = [
+            { id: 'hero_subtitle', content: '' },
+            { id: 'about_headline', content: '' },
+            { id: 'about_body', content: '' },
+            { id: 'contact_body', content: '' }
+        ];
+        const { error } = await db.from('site_content').upsert(updates);
+        if (error) { setStatus('site-content-status', 'error', 'Failed to clear: ' + error.message); return; }
+
+        setStatus('site-content-status', 'success', 'Text cleared. Enter new copy above and save.');
+        loadSiteContent();
+    }
+
     async function loadProjects() {
         const list = document.getElementById('project-list');
         list.innerHTML = '<div class="empty-state">Loading…</div>';
@@ -1647,6 +1723,19 @@
         else loadProjects();
     }
 
+    async function clearAllProjectDescriptions() {
+        if (!confirm('Clear the description text on every project? Titles, images, clients, and categories stay exactly as they are.')) return;
+
+        setStatus('project-status', 'loading', 'Clearing all descriptions…');
+        const { error } = await db.from('projects').update({ description: '' }).not('id', 'is', null);
+        if (error) {
+            setStatus('project-status', 'error', 'Failed to clear descriptions: ' + error.message);
+            return;
+        }
+        setStatus('project-status', 'success', 'All project descriptions cleared.');
+        loadProjects();
+    }
+
     /* ── PROJECT MEDIA CMS ──────────────────────────────── */
     async function loadProjectMedia() {
         const { data: projs } = await db.from('projects').select('id, title').order('created_at', { ascending: false });
@@ -1721,6 +1810,107 @@
         await db.storage.from(BUCKET).remove([fileName]);
         await db.from('project_media').delete().eq('id', id);
         loadProjectMedia();
+    }
+
+    /* ── LOGO MARQUEE CMS ───────────────────────────────── */
+    let logoBlob = null;
+
+    const logoFileInput = document.getElementById('logo-file');
+    const logoPreview    = document.getElementById('logo-preview');
+
+    logoFileInput.addEventListener('change', async () => {
+        const file = logoFileInput.files[0];
+        if (!file) return;
+
+        const tempUrl = URL.createObjectURL(file);
+        logoPreview.src = tempUrl;
+        logoPreview.style.display = 'block';
+
+        setStatus('logo-status', 'loading', 'Compressing image…');
+        const { blob } = await compressIfImage(file);
+        logoBlob = blob;
+        clearStatus('logo-status');
+    });
+
+    const logoDropZone = document.getElementById('logo-drop-zone');
+    logoDropZone.addEventListener('dragover', (e) => { e.preventDefault(); logoDropZone.classList.add('drag-over'); });
+    logoDropZone.addEventListener('dragleave', () => logoDropZone.classList.remove('drag-over'));
+    logoDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        logoDropZone.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (!file || !file.type.startsWith('image/')) return;
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        logoFileInput.files = dt.files;
+        logoFileInput.dispatchEvent(new Event('change'));
+    });
+
+    async function uploadLogo() {
+        const name = document.getElementById('logo-name').value.trim();
+        if (!name) { setStatus('logo-status', 'error', 'Client/partner name is required.'); return; }
+        if (!logoBlob) { setStatus('logo-status', 'error', 'Choose a logo image first.'); return; }
+
+        setStatus('logo-status', 'loading', 'Uploading…');
+
+        const fileName = `logo_${Date.now()}.jpg`;
+        const { error: uploadErr } = await db.storage.from(BUCKET).upload(fileName, logoBlob, { contentType: 'image/jpeg' });
+        if (uploadErr) { setStatus('logo-status', 'error', 'Upload failed: ' + uploadErr.message); return; }
+
+        const { data: urlData } = db.storage.from(BUCKET).getPublicUrl(fileName);
+        const { data, error } = await db.from('partner_logos').insert({ name, logo_url: urlData.publicUrl }).select();
+
+        if (error) { setStatus('logo-status', 'error', 'Database error: ' + error.message); return; }
+        else if (!data || !data.length) { setStatus('logo-status', 'error', 'Blocked by database.'); return; }
+
+        setStatus('logo-status', 'success', 'Logo added to the marquee!');
+        showSavedAssurance('global-save-btn');
+        logoBlob = null;
+        document.getElementById('logo-name').value = '';
+        logoPreview.style.display = 'none';
+        logoFileInput.value = '';
+        loadLogos();
+    }
+
+    async function loadLogos() {
+        const grid = document.getElementById('logo-thumb-grid');
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">Loading…</div>';
+
+        const { data, error } = await db.from('partner_logos')
+            .select('id, name, logo_url')
+            .order('created_at', { ascending: true });
+
+        if (error || !data) { grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">Failed to load.</div>'; return; }
+        if (!data.length) { grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">No logos yet.</div>'; return; }
+
+        grid.innerHTML = data.map(l => `
+            <div class="poster-thumb" id="lg-${l.id}">
+                <img src="${escapeHtml(l.logo_url)}" alt="${escapeHtml(l.name)}" loading="lazy" style="background:#fff; object-fit:contain;">
+                <button class="del-btn" onclick="deleteLogo('${l.id}', '${urlToFilename(l.logo_url)}')">✕</button>
+            </div>
+        `).join('');
+    }
+
+    async function deleteLogo(id, fileName) {
+        if (!confirm('Remove this logo from the marquee?')) return;
+
+        const el = document.getElementById('lg-' + id);
+        if (el) el.style.opacity = '0.3';
+
+        await db.storage.from(BUCKET).remove([fileName]);
+        const { error } = await db.from('partner_logos').delete().eq('id', id);
+
+        if (error) {
+            alert('Delete failed: ' + error.message);
+            if (el) el.style.opacity = '1';
+            return;
+        }
+
+        if (el) el.remove();
+        const grid = document.getElementById('logo-thumb-grid');
+        if (!grid.querySelector('.poster-thumb')) {
+            grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">No logos yet.</div>';
+        }
     }
     </script>
 </body>
