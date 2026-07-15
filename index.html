@@ -200,6 +200,15 @@
         const supabase = window.db;
 
         async function loadDynamicContent() {
+            if (!supabase) { console.error('Database unavailable, skipping dynamic content.'); return; }
+            try {
+                await loadHomepageContent();
+            } catch (err) {
+                console.error('Failed to load dynamic homepage content:', err);
+            }
+        }
+
+        async function loadHomepageContent() {
             // 1. Fetch Hero Video automatically
             const { data: files } = await supabase.storage.from('portfolio_assets').list('', { search: 'hero-video' });
             if (files && files.length > 0) {
