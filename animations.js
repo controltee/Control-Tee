@@ -294,13 +294,16 @@ document.addEventListener('contextmenu', e => {
     if (!toggleBtn || !menu) return;
 
     toggleBtn.addEventListener('click', () => {
-        menu.classList.toggle('open');
+        const open = menu.classList.toggle('open');
+        toggleBtn.setAttribute('aria-expanded', String(open));
     });
     textBtn.addEventListener('click', () => {
-        document.body.classList.toggle('large-text');
+        const active = document.body.classList.toggle('large-text');
+        textBtn.setAttribute('aria-pressed', String(active));
     });
     contrastBtn.addEventListener('click', () => {
-        document.body.classList.toggle('high-contrast');
+        const active = document.body.classList.toggle('high-contrast');
+        contrastBtn.setAttribute('aria-pressed', String(active));
     });
 })();
 

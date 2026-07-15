@@ -9,21 +9,24 @@
 </head>
 <body>
 
+    <!-- Skip link -->
+    <a href="#work" class="skip-link">Skip to content</a>
+
     <!-- Accessibility Widget -->
     <div class="a11y-widget">
-        <button class="a11y-btn" id="a11y-toggle" title="Accessibility Options">
+        <button class="a11y-btn" id="a11y-toggle" title="Accessibility Options" aria-label="Accessibility options" aria-haspopup="true" aria-expanded="false" aria-controls="a11y-menu">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="4" r="2"></circle><path d="M12 7v7m-5-2l5 2 5-2m-5 2v7m-3-4h6"></path>
             </svg>
         </button>
-        <div class="a11y-menu" id="a11y-menu">
-            <button id="a11y-text-btn">Toggle Text Size</button>
-            <button id="a11y-contrast-btn">Toggle High Contrast</button>
+        <div class="a11y-menu" id="a11y-menu" role="menu">
+            <button id="a11y-text-btn" role="menuitem" aria-pressed="false">Toggle Text Size</button>
+            <button id="a11y-contrast-btn" role="menuitem" aria-pressed="false">Toggle High Contrast</button>
         </div>
     </div>
 
     <!-- Preloader -->
-    <div class="preloader">
+    <div class="preloader" aria-hidden="true">
         <div class="preloader-folder">
             <div class="folder-tab"></div>
             <div class="folder-body"></div>

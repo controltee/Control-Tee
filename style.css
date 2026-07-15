@@ -40,6 +40,25 @@ a, button, .folder-card {
 }
 .container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
 
+/* ── SKIP LINK ──────────────────────────────────────── */
+.skip-link {
+    position: fixed;
+    top: -60px; left: 12px;
+    z-index: 10000;
+    background: var(--yellow);
+    color: var(--black);
+    padding: 12px 20px;
+    font-family: 'Cabinet Grotesk', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-size: 0.8rem;
+    text-decoration: none;
+    border-radius: 2px;
+    transition: top 0.2s ease;
+}
+.skip-link:focus { top: 12px; }
+
 /* ── PRELOADER ──────────────────────────────────────── */
 .preloader {
     position: fixed;
@@ -674,6 +693,16 @@ body.high-contrast { --black: #000; --white: #fff; --yellow: #fff200; --green: #
 }
 .taskbar-cta:hover { background: var(--yellow); color: var(--black) !important; border-color: var(--yellow); }
 
+/* ── EMPTY / LOADING STATE ──────────────────────────── */
+.empty-state {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.55);
+    padding: 32px 0;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
 /* ── FOOTER ─────────────────────────────────────────── */
 .main-footer { padding: 60px 20px 44px; text-align: center; border-top: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; gap: 26px; }
 .social-links { display: flex; gap: 32px; }
@@ -693,4 +722,6 @@ body.high-contrast { --black: #000; --white: #fff; --yellow: #fff200; --green: #
     .sticky-back-nav { top: 20px; left: 20px; }
     body, a, button, .folder-card { cursor: auto; }
     .case-meta { grid-template-columns: 1fr 1fr; }
+    .case-meta-item { padding: 20px; }
+    .taskbar-center { display: none; }
 }
