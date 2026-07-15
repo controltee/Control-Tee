@@ -7,3 +7,11 @@ if (!window.supabase) {
 } else {
     window.db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
+
+// Escapes text pulled from the database before it is interpolated into innerHTML.
+window.escapeHtml = function (str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"']/g, (ch) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[ch]);
+};

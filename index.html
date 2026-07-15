@@ -228,9 +228,9 @@
                 const track = document.getElementById('dynamic-poster-track');
                 const section = document.getElementById('poster-section');
                 if (track && section) {
-                    let html = posters.map(p => `<img src="${p.image_url}" alt="Control Tee Poster" class="poster-item">`).join('');
-                    track.innerHTML = html + html; 
-                    section.style.display = 'block'; 
+                    let html = posters.map(p => `<img src="${escapeHtml(p.image_url)}" alt="Control Tee Poster" class="poster-item" loading="lazy">`).join('');
+                    track.innerHTML = html + html;
+                    section.style.display = 'block';
                 }
             }
 

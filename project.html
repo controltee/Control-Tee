@@ -91,16 +91,18 @@
                 if (window.scrambleText) window.scrambleText(titleEl);
 
                 document.title = project.title + ' — Control Tee';
-                document.getElementById('project-desc').innerHTML = project.description ? project.description.replace(/\n/g, '<br>') : '';
+                document.getElementById('project-desc').innerHTML = project.description ? escapeHtml(project.description).replace(/\n/g, '<br>') : '';
                 document.getElementById('meta-client').textContent = project.clients ? project.clients.name : 'Independent';
                 document.getElementById('meta-category').textContent = project.categories ? project.categories.name : 'Uncategorized';
                 document.getElementById('meta-date').textContent = project.date_made || new Date(project.created_at).getFullYear();
                 document.getElementById('project-meta').style.opacity = '1';
 
                 const isVideo = project.cover_url && project.cover_url.match(/\.(mp4|webm)$/i);
-                document.getElementById('project-media').innerHTML = isVideo 
-                    ? `<video src="${project.cover_url}" autoplay muted loop playsinline style="width:100%; max-height: 85vh; object-fit:cover; display:block;"></video>`
-                    : `<img src="${project.cover_url}" style="width:100%; max-height: 85vh; object-fit:cover; display:block;" alt="${project.title}">`;
+                const safeTitle = escapeHtml(project.title);
+                const safeCoverUrl = escapeHtml(project.cover_url);
+                document.getElementById('project-media').innerHTML = isVideo
+                    ? `<video src="${safeCoverUrl}" autoplay muted loop playsinline style="width:100%; max-height: 85vh; object-fit:cover; display:block;"></video>`
+                    : `<img src="${safeCoverUrl}" style="width:100%; max-height: 85vh; object-fit:cover; display:block;" alt="${safeTitle}">`;
 
                 // Load Additional Gallery Images
                 const { data: mediaFiles, error: mediaErr } = await supabase.from('project_media').select('media_url').eq('project_id', id);
@@ -108,8 +110,8 @@
                     console.error("Gallery Load Error:", mediaErr.message);
                 } else if (mediaFiles && mediaFiles.length > 0) {
                     const track = document.getElementById('gallery-track');
-                    let html = mediaFiles.map(m => `<img src="${m.media_url}" alt="${project.title} Gallery" class="poster-item">`).join('');
-                    track.innerHTML = html + html; 
+                    let html = mediaFiles.map(m => `<img src="${escapeHtml(m.media_url)}" alt="${safeTitle} Gallery" class="poster-item" loading="lazy">`).join('');
+                    track.innerHTML = html + html;
                     document.getElementById('project-gallery-container').style.display = 'block';
                 }
             } catch (err) {

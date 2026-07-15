@@ -92,16 +92,18 @@
 
                 grid.innerHTML = projects.map(p => {
                     const isVideo = p.cover_url && p.cover_url.match(/\.(mp4|webm)$/i);
-                    const mediaHtml = isVideo 
-                        ? `<video src="${p.cover_url}" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover;display:block;"></video>`
-                        : `<img src="${p.cover_url}" alt="${p.title}">`;
+                    const title = escapeHtml(p.title);
+                    const coverUrl = escapeHtml(p.cover_url);
+                    const mediaHtml = isVideo
+                        ? `<video src="${coverUrl}" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover;display:block;"></video>`
+                        : `<img src="${coverUrl}" alt="${title}" loading="lazy">`;
 
                     return `
-                        <a href="project.html?id=${p.id}" class="project-card reveal is-visible">
+                        <a href="project.html?id=${encodeURIComponent(p.id)}" class="project-card reveal is-visible">
                             ${mediaHtml}
                             <div class="project-card-info">
-                                <p class="project-card-cat">${category.name} · ${p.clients ? p.clients.name : 'Independent'}</p>
-                                <h3 class="project-card-title">${p.title}</h3>
+                                <p class="project-card-cat">${escapeHtml(category.name)} · ${escapeHtml(p.clients ? p.clients.name : 'Independent')}</p>
+                                <h3 class="project-card-title">${title}</h3>
                             </div>
                         </a>
                     `;
