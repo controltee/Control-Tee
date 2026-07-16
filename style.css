@@ -524,11 +524,11 @@ a, button, .folder-card {
     object-fit: contain;
     flex-shrink: 0;
     margin: 0 60px;
-    filter: brightness(0) invert(1);
-    opacity: 0.45;
+    filter: grayscale(1);
+    opacity: 0.55;
     transition: opacity 0.45s ease, filter 0.45s ease;
 }
-.partner-logo:hover { opacity: 1; }
+.partner-logo:hover { opacity: 1; filter: grayscale(0); }
 
 /* ── SUB PAGE NAV ───────────────────────────────────── */
 .sticky-back-nav { position: fixed; top: 30px; left: 30px; z-index: 1000; }

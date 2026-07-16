@@ -1004,6 +1004,34 @@
         return { blob, ext: 'jpg', contentType: 'image/jpeg' };
     }
 
+    // Logos need PNG's transparency preserved (JPEG flattens it to an opaque
+    // background), and don't need photo-scale resolution, so this resizes
+    // without converting to JPEG the way compressImage() does.
+    function compressLogo(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const maxPx = 800;
+                    let { width, height } = img;
+                    if (width > maxPx || height > maxPx) {
+                        const ratio = Math.min(maxPx / width, maxPx / height);
+                        width  = Math.round(width  * ratio);
+                        height = Math.round(height * ratio);
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width  = width;
+                    canvas.height = height;
+                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                    canvas.toBlob(resolve, 'image/png');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
     /* ── POSTER UPLOAD ──────────────────────────────────── */
     let compressedBlob = null;
 
@@ -1864,9 +1892,8 @@
         logoPreview.src = tempUrl;
         logoPreview.style.display = 'block';
 
-        setStatus('logo-status', 'loading', 'Compressing image…');
-        const { blob } = await compressIfImage(file);
-        logoBlob = blob;
+        setStatus('logo-status', 'loading', 'Processing image…');
+        logoBlob = await compressLogo(file);
         clearStatus('logo-status');
     });
 
@@ -1891,8 +1918,8 @@
 
         setStatus('logo-status', 'loading', 'Uploading…');
 
-        const fileName = `logo_${Date.now()}.jpg`;
-        const { error: uploadErr } = await db.storage.from(BUCKET).upload(fileName, logoBlob, { contentType: 'image/jpeg' });
+        const fileName = `logo_${Date.now()}.png`;
+        const { error: uploadErr } = await db.storage.from(BUCKET).upload(fileName, logoBlob, { contentType: 'image/png' });
         if (uploadErr) { setStatus('logo-status', 'error', 'Upload failed: ' + uploadErr.message); return; }
 
         const { data: urlData } = db.storage.from(BUCKET).getPublicUrl(fileName);
